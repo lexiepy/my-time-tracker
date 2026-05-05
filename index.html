@@ -65,6 +65,25 @@
             cursor: pointer;
         }
 
+        .backup-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .btn-backup {
+            flex: 1;
+            background: #2c2c2e;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
         .week-box {
             background: var(--card-bg);
             border-radius: var(--border-radius);
@@ -113,6 +132,12 @@
             <div class="field"><label>Uscita</label><input type="time" id="d_out" value="18:00"></div>
         </div>
         <button class="btn-submit" onclick="addEntry()">Registra Presenza</button>
+    </div>
+
+    <!-- Backup Controls -->
+    <div class="backup-controls">
+        <button class="btn-backup" onclick="exportData()">💾 Esporta Backup</button>
+        <button class="btn-backup" onclick="importData()">📂 Importa Backup</button>
     </div>
 
     <div id="history"></div>
@@ -191,7 +216,6 @@
             groups[l.weekID].items.push(l);
             groups[l.weekID].sum += l.delta;
             
-            // Se il log appartiene alla settimana attuale, aggiungi al KPI
             if(l.weekID === currentWeekID) {
                 currentWeekTotal += l.delta;
             }
@@ -232,6 +256,43 @@
 
         mainBal.innerText = fmt(currentWeekTotal);
         mainBal.className = `kpi-value ${currentWeekTotal >= 0 ? 'pos' : 'neg'}`;
+    }
+
+    // Funzioni di Backup
+    function exportData() {
+        if (logs.length === 0) return alert("Nessun dato da esportare.");
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(logs));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", "timetracker_backup_" + new Date().toISOString().split('T')[0] + ".json");
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    }
+
+    function importData() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = e => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.readAsText(file, 'UTF-8');
+            reader.onload = readerEvent => {
+                try {
+                    const content = JSON.parse(readerEvent.target.result);
+                    if (Array.isArray(content) && confirm("Questo sovrascriverà i dati attuali con quelli del file. Procedere?")) {
+                        logs = content;
+                        save();
+                    } else if (!Array.isArray(content)) {
+                        alert("Formato file non valido.");
+                    }
+                } catch (e) {
+                    alert("Errore durante la lettura del file.");
+                }
+            }
+        }
+        input.click();
     }
 
     window.del = (id) => { if(confirm('Eliminare questa voce?')) { logs = logs.filter(l => l.id !== id); save(); } };
