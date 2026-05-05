@@ -21,7 +21,7 @@
         body { background-color: var(--bg-color); color: var(--text-primary); padding: 20px; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 500px; animation: fadeIn 0.5s ease; }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10s); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .kpi-container {
             background: linear-gradient(145deg, #2c2c2e 0%, #1c1c1e 100%);
@@ -31,14 +31,10 @@
             margin-bottom: 25px;
             border: 1px solid var(--border-color);
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            position: relative;
-            overflow: hidden;
         }
 
         .clock-icon {
             display: inline-block;
-            vertical-align: middle;
-            margin-right: 10px;
             color: var(--accent-color);
             width: 32px;
             height: 32px;
@@ -66,9 +62,9 @@
             padding: 14px;
             border-radius: 12px;
             font-size: 1rem;
-            transition: all 0.2s;
+            outline: none;
         }
-        input:focus { border-color: var(--accent-color); background: #3a3a3c; outline: none; }
+        input:focus { border-color: var(--accent-color); background: #3a3a3c; }
         
         .btn-submit {
             width: 100%;
@@ -80,9 +76,7 @@
             font-weight: 700;
             font-size: 1.05rem;
             cursor: pointer;
-            transition: transform 0.1s;
         }
-        .btn-submit:active { transform: scale(0.98); }
 
         .backup-controls { display: flex; gap: 10px; margin-bottom: 20px; }
         .btn-backup {
@@ -95,9 +89,7 @@
             font-size: 0.7rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s;
         }
-        .btn-backup:hover { background: #1c1c1e; color: white; }
 
         .week-box {
             background: var(--card-bg);
@@ -123,8 +115,7 @@
         
         .pos { color: var(--success); }
         .neg { color: var(--danger); }
-        .btn-del { color: #555; background: none; border: none; font-size: 1.2rem; cursor: pointer; transition: color 0.2s; }
-        .btn-del:hover { color: var(--danger); }
+        .btn-del { color: #555; background: none; border: none; font-size: 1.2rem; cursor: pointer; }
 
         .hidden { display: none; }
     </style>
@@ -133,36 +124,36 @@
 
 <div class="container">
     <header class="kpi-container">
-        <!-- Icona Orologio SVG -->
         <svg class="clock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"></circle>
             <polyline points="12 6 12 12 16 14"></polyline>
         </svg>
         <div class="kpi-label">Saldo Settimanale</div>
         <div id="mainBalance" class="kpi-value">0h 0m</div>
-        <div style="font-size: 0.75rem; color: var(--text-secondary); opacity: 0.7;">Target 3gg/settimana</div>
+        <div style="font-size: 0.75rem; color: var(--text-secondary); opacity: 0.7;">Target: 7h 30m (3gg totali)</div>
     </header>
 
     <div class="input-card">
         <div class="grid-inputs">
             <div class="field"><label>Data</label><input type="date" id="d_date"></div>
             <div class="field"><label>Pausa (min)</label><input type="number" id="d_break" value="30"></div>
-            <div class="field"><label>Ingresso</label><input type="time" id="d_in" value="09:00"></div>
-            <div class="field"><label>Uscita</label><input type="time" id="d_out" value="18:00"></div>
+            <div class="field"><label>Ingresso</label><input type="time" id="d_in" value="08:00"></div>
+            <div class="field"><label>Uscita</label><input type="time" id="d_out" value="16:00"></div>
         </div>
         <button class="btn-submit" onclick="addEntry()">Registra Sessione</button>
     </div>
 
     <div class="backup-controls">
-        <button class="btn-backup" onclick="exportData()">📤 Esporta Dati</button>
-        <button class="btn-backup" onclick="importData()">📥 Importa Dati</button>
+        <button class="btn-backup" onclick="exportData()">📤 Esporta Backup</button>
+        <button class="btn-backup" onclick="importData()">📥 Importa Backup</button>
     </div>
 
     <div id="history"></div>
 </div>
 
 <script>
-    const TARGETS = { standard: 8, friday: 6 };
+    // TARGET MODIFICATO: 7.5 ore (7h 30m) per essere in pari con 8 ore di presenza totali
+    const TARGETS = { standard: 7.5, friday: 6 }; 
     document.getElementById('d_date').valueAsDate = new Date();
 
     let logs = JSON.parse(localStorage.getItem('timeLogs_v3')) || [];
@@ -188,12 +179,14 @@
         const [h1, m1] = inVal.split(':').map(Number);
         const [h2, m2] = outVal.split(':').map(Number);
         
-        let worked = (h2 * 60 + m2) - (h1 * 60 + m1);
+        let workedMinutes = (h2 * 60 + m2) - (h1 * 60 + m1);
         const isFri = d.getDay() === 5;
+        
+        // Target in minuti: 7.5 ore = 450 minuti
         const targetMin = (isFri ? TARGETS.friday : TARGETS.standard) * 60;
         const pause = isFri ? 0 : breakVal;
         
-        const delta = worked - pause - targetMin;
+        const delta = workedMinutes - pause - targetMin;
 
         logs.push({
             id: Date.now(),
