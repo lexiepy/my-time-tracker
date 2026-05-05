@@ -2,8 +2,8 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TimeTracker - Precision Mode</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TimeTracker - Mobile Fix</title>
     <style>
         :root {
             --bg-color: #000000;
@@ -17,92 +17,101 @@
             --border-radius: 18px;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-primary); padding: 20px; display: flex; justify-content: center; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-primary); padding: 15px; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 480px; }
 
-        /* Header Estetico */
         .kpi-container {
             background: linear-gradient(180deg, #2c2c2e 0%, #1c1c1e 100%);
-            padding: 30px 20px;
-            border-radius: 28px;
+            padding: 25px 15px;
+            border-radius: 24px;
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             border: 1px solid var(--border-color);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
         }
 
-        .clock-icon {
-            width: 40px;
-            height: 40px;
-            margin-bottom: 12px;
-            color: var(--accent-color);
-            filter: drop-shadow(0 0 8px rgba(10, 132, 255, 0.3));
-        }
+        .clock-icon { width: 35px; height: 35px; margin-bottom: 10px; color: var(--accent-color); }
+        .kpi-value { font-size: 3.5rem; font-weight: 800; margin: 5px 0; letter-spacing: -2px; line-height: 1; }
+        .kpi-label { color: var(--text-secondary); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
 
-        .kpi-value { font-size: 3.8rem; font-weight: 800; margin: 5px 0; letter-spacing: -2px; line-height: 1; }
-        .kpi-label { color: var(--text-secondary); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-
-        /* Card Input */
         .input-card {
             background: var(--card-bg);
-            padding: 22px;
+            padding: 20px;
             border-radius: var(--border-radius);
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             border: 1px solid var(--border-color);
         }
-        .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
-        .field { display: flex; flex-direction: column; gap: 6px; }
-        label { color: var(--text-secondary); font-size: 0.7rem; font-weight: 700; margin-left: 4px; }
+
+        /* FIX: Grid layout per evitare overflow */
+        .grid-inputs { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 12px; 
+            margin-bottom: 20px; 
+        }
         
+        .field { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 6px; 
+            min-width: 0; /* Forza il contenuto a stare nel container */
+            overflow: hidden; 
+        }
+        
+        label { color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; margin-left: 2px; }
+        
+        /* FIX: Reset stili per mobile */
         input {
             background: #2c2c2e;
             border: 1px solid transparent;
             color: white;
-            padding: 12px;
+            padding: 12px 8px; /* Padding bilanciato */
             border-radius: 12px;
             font-size: 1rem;
-            transition: all 0.2s;
+            width: 100%;
+            display: block;
+            -webkit-appearance: none; /* Rimuove stile iOS */
+            appearance: none;
+            outline: none;
         }
-        input:focus { border-color: var(--accent-color); background: #3a3a3c; outline: none; }
         
+        /* Rimuove le freccette che spostano il testo */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        /* Fix specifico per l'icona orologio nativa che taglia il testo */
+        input::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            margin-left: 0;
+            padding: 0;
+            cursor: pointer;
+        }
+
         .btn-submit {
             width: 100%;
             background: var(--accent-color);
             color: white;
             border: none;
-            padding: 16px;
-            border-radius: 14px;
+            padding: 18px;
+            border-radius: 15px;
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 1.1rem;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(10, 132, 255, 0.2);
         }
-        .btn-submit:active { transform: scale(0.98); }
 
-        /* Lista Storico */
-        .week-box {
-            background: var(--card-bg);
-            border-radius: var(--border-radius);
-            margin-bottom: 12px;
-            border: 1px solid var(--border-color);
-            overflow: hidden;
-        }
-        .week-header { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .week-title { font-weight: 700; font-size: 0.9rem; }
+        .backup-section { display: flex; gap: 8px; margin-bottom: 20px; }
+        .btn-util { flex: 1; background: #1c1c1e; border: 1px solid #333; color: #8e8e93; padding: 10px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; }
+        
+        .week-box { background: var(--card-bg); border-radius: var(--border-radius); margin-bottom: 12px; border: 1px solid var(--border-color); overflow: hidden; }
+        .week-header { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
         
         table { width: 100%; border-collapse: collapse; }
-        td { padding: 14px 20px; border-top: 1px solid #2c2c2e; font-size: 0.85rem; }
+        td { padding: 14px 15px; border-top: 1px solid #2c2c2e; font-size: 0.85rem; }
         
         .pos { color: var(--success); }
         .neg { color: var(--danger); }
-        .btn-del { color: #444; background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0 5px; }
-
-        .backup-section { display: flex; gap: 8px; margin-bottom: 20px; }
-        .btn-util { flex: 1; background: #1c1c1e; border: 1px solid #333; color: #8e8e93; padding: 8px; border-radius: 8px; font-size: 0.65rem; font-weight: 600; cursor: pointer; }
-        
+        .btn-del { color: #444; background: none; border: none; font-size: 1.2rem; }
         .hidden { display: none; }
-        .small-info { font-size: 0.65rem; color: #555; }
     </style>
 </head>
 <body>
@@ -114,9 +123,6 @@
         </svg>
         <div class="kpi-label">Saldo Settimanale</div>
         <div id="mainBalance" class="kpi-value">0h 0m</div>
-        <div style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 8px;">
-            Target 8h presenza <span style="opacity:0.5">|</span> Max Pausa 30m
-        </div>
     </header>
 
     <div class="input-card">
@@ -130,16 +136,14 @@
     </div>
 
     <div class="backup-section">
-        <button class="btn-util" onclick="exportData()">📦 BACKUP DATI</button>
-        <button class="btn-util" onclick="importData()">📥 CARICA DATI</button>
+        <button class="btn-util" onclick="exportData()">📦 BACKUP</button>
+        <button class="btn-util" onclick="importData()">📥 CARICA</button>
     </div>
 
     <div id="history"></div>
 </div>
 
 <script>
-    // Configurazione: Target 8 ore (480 min). La pausa di 30 min è "inclusa" nel target di presenza.
-    // In pratica: 16:00 - 08:00 = 480 min. Se pausa <= 30, Delta = 0.
     const TARGET_MINUTES = 8 * 60; 
     const FRIDAY_TARGET = 6 * 60;
     const MAX_FREE_BREAK = 30;
@@ -160,6 +164,8 @@
         const d_out = document.getElementById('d_out').value;
         const realBreak = parseInt(document.getElementById('d_break').value) || 0;
 
+        if(!d_date || !d_in || !d_out) return;
+
         const [h1, m1] = d_in.split(':').map(Number);
         const [h2, m2] = d_out.split(':').map(Number);
         
@@ -167,11 +173,7 @@
         const isFri = new Date(d_date).getDay() === 5;
         const target = isFri ? FRIDAY_TARGET : TARGET_MINUTES;
 
-        // LOGICA RICHIESTA: 
-        // Solo la parte di pausa che ECCEDE i 30 min viene sottratta dal saldo.
         const extraBreak = (!isFri && realBreak > MAX_FREE_BREAK) ? (realBreak - MAX_FREE_BREAK) : 0;
-        
-        // Delta = Presenza effettiva rispetto all'orario teorico - l'eccedenza pausa
         const delta = presence - target - extraBreak;
 
         logs.push({ id: Date.now(), date: d_date, weekID: getISOWeek(d_date), in: d_in, out: d_out, pause: realBreak, delta: delta });
@@ -212,17 +214,17 @@
             div.className = 'week-box';
             div.innerHTML = `
                 <div class="week-header" onclick="this.nextElementSibling.classList.toggle('hidden')">
-                    <span class="week-title">Settimana ${wId.split('W')[1]}</span>
+                    <span style="font-weight:700; font-size:0.9rem">Settimana ${wId.split('W')[1]}</span>
                     <span class="${data.sum >= 0 ? 'pos' : 'neg'}" style="font-weight:700">${fmt(data.sum)}</span>
                 </div>
                 <div class="${isCurrent ? '' : 'hidden'}">
                     <table>
                         ${data.items.map(i => `
                             <tr>
-                                <td><span style="text-transform:capitalize">${new Date(i.date).toLocaleDateString('it-IT',{weekday:'short'})}</span> <strong>${new Date(i.date).toLocaleDateString('it-IT',{day:'2-digit'})}</strong></td>
-                                <td>${i.in}–${i.out} <div class="small-info">Pausa: ${i.pause}m</div></td>
+                                <td><strong>${new Date(i.date).toLocaleDateString('it-IT',{day:'2-digit', month:'short'})}</strong></td>
+                                <td>${i.in}–${i.out} <div style="font-size:0.65rem; color:#555">Pausa: ${i.pause}m</div></td>
                                 <td class="${i.delta >= 0 ? 'pos' : 'neg'}" style="text-align:right"><strong>${fmt(i.delta)}</strong></td>
-                                <td style="width:20px; text-align:right"><button class="btn-del" onclick="event.stopPropagation(); del(${i.id})">×</button></td>
+                                <td style="text-align:right"><button class="btn-del" onclick="event.stopPropagation(); del(${i.id})">×</button></td>
                             </tr>
                         `).join('')}
                     </table>
@@ -239,7 +241,7 @@
         const blob = new Blob([JSON.stringify(logs)], {type: "application/json"});
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `backup_tempi_${new Date().toISOString().slice(0,10)}.json`;
+        a.download = "backup_tempi.json";
         a.click();
     }
 
@@ -249,10 +251,7 @@
         input.onchange = e => {
             const reader = new FileReader();
             reader.readAsText(e.target.files[0]);
-            reader.onload = e => { 
-                try { logs = JSON.parse(e.target.result); save(); } 
-                catch(err) { alert("File non valido"); }
-            };
+            reader.onload = e => { logs = JSON.parse(e.target.result); save(); };
         };
         input.click();
     }
