@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TimeTracker Pro - Dashboard</title>
+    <title>TimeTracker Pro - Weekly</title>
     <style>
         :root {
             --bg-color: #000000;
@@ -47,11 +47,12 @@
             background: var(--card-bg);
             padding: 20px;
             border-radius: var(--border-radius);
-            margin-bottom: 30px;
+            margin-bottom: 40px;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
             gap: 15px;
             align-items: end;
+            border: 1px solid var(--border-color);
         }
         .field { display: flex; flex-direction: column; gap: 5px; }
         label { color: var(--text-secondary); font-size: 0.75rem; font-weight: 600; padding-left: 4px; }
@@ -65,7 +66,8 @@
             outline: none;
         }
         input:focus { border-color: var(--accent-color); }
-        button {
+        
+        .btn-add {
             background: var(--accent-color);
             color: white;
             border: none;
@@ -75,15 +77,40 @@
             cursor: pointer;
             transition: transform 0.1s;
         }
-        button:active { transform: scale(0.98); }
+        .btn-add:active { transform: scale(0.98); }
 
-        /* Table Style */
-        .table-container {
+        /* Weekly Accordion Style */
+        details {
             background: var(--card-bg);
             border-radius: var(--border-radius);
             border: 1px solid var(--border-color);
-            overflow-x: auto; /* Scroll per mobile */
+            margin-bottom: 15px;
+            overflow: hidden;
         }
+        summary {
+            padding: 15px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            list-style: none;
+            background: #2c2c2e;
+        }
+        summary::-webkit-details-marker { display: none; }
+        summary:hover { background: #3a3a3c; }
+
+        .week-info { display: flex; align-items: center; gap: 15px; }
+        .week-title { font-size: 1rem; color: var(--text-primary); }
+        .week-badge { 
+            font-size: 0.85rem; 
+            padding: 4px 10px; 
+            border-radius: 20px; 
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* Table Style */
+        .table-container { overflow-x: auto; }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -91,26 +118,19 @@
             min-width: 600px;
         }
         th {
-            background: #2c2c2e;
             color: var(--text-secondary);
-            font-weight: 600;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             text-transform: uppercase;
-            padding: 12px 15px;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border-color);
         }
         td {
-            padding: 15px;
+            padding: 12px 20px;
             border-bottom: 1px solid var(--border-color);
             font-size: 0.9rem;
         }
         tr:last-child td { border-bottom: none; }
-        
-        .status-pill {
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-weight: 700;
-            font-size: 0.8rem;
-        }
+
         .positive { color: var(--success); }
         .negative { color: var(--danger); }
         
@@ -118,13 +138,12 @@
             background: transparent;
             color: #ff453a;
             border: 1px solid #ff453a;
-            padding: 5px 10px;
+            padding: 4px 8px;
             font-size: 0.7rem;
             border-radius: 6px;
+            cursor: pointer;
         }
-        .btn-delete:hover { background: rgba(255, 69, 58, 0.1); }
 
-        /* Responsive */
         @media (max-width: 600px) {
             .input-panel { grid-template-columns: 1fr 1fr; }
             .btn-add { grid-column: span 2; }
@@ -161,22 +180,8 @@
         <button class="btn-add" onclick="addEntry()">Aggiungi</button>
     </div>
 
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Data</th>
-                    <th>Ingresso/Uscita</th>
-                    <th>Pausa</th>
-                    <th>Target</th>
-                    <th>Saldo</th>
-                    <th>Azione</th>
-                </tr>
-            </thead>
-            <tbody id="logTableBody">
-                <!-- I dati appariranno qui -->
-            </tbody>
-        </table>
+    <div id="weeklyGroups">
+        <!-- I gruppi settimanali appariranno qui -->
     </div>
 </div>
 
@@ -187,6 +192,14 @@
     document.getElementById('date').valueAsDate = new Date();
 
     let logs = JSON.parse(localStorage.getItem('workLogs')) || [];
+
+    // Utility: Ottiene il numero della settimana
+    function getWeekNumber(d) {
+        d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+        return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    }
 
     function addEntry() {
         const dateInput = document.getElementById('date').value;
@@ -201,16 +214,16 @@
         const [hOut, mOut] = exitTime.split(':').map(Number);
         
         let workedMinutes = (hOut * 60 + mOut) - (hIn * 60 + mIn);
-        
         const isFriday = dateVal.getDay() === 5;
         const targetMinutes = isFriday ? STD_HOURS_FRI * 60 : STD_HOURS_WEEK * 60;
         const actualBreak = isFriday ? 0 : breakMin;
-        
         const delta = workedMinutes - actualBreak - targetMinutes;
 
         const newLog = {
             id: Date.now(),
             date: dateInput,
+            week: getWeekNumber(dateVal),
+            year: dateVal.getFullYear(),
             entry: entryTime,
             exit: exitTime,
             break: actualBreak,
@@ -218,8 +231,8 @@
             delta: delta
         };
 
-        logs.unshift(newLog);
-        logs.sort((a, b) => new Date(b.date) - new Date(a.date)); // Ordina per data decrescente
+        logs.push(newLog);
+        logs.sort((a, b) => new Date(b.date) - new Date(a.date));
         save();
     }
 
@@ -244,29 +257,75 @@
     }
 
     function render() {
-        const tbody = document.getElementById('logTableBody');
+        const container = document.getElementById('weeklyGroups');
         const balanceEl = document.getElementById('totalBalance');
-        tbody.innerHTML = '';
+        container.innerHTML = '';
         
         let totalDelta = 0;
 
-        logs.forEach(log => {
+        // Raggruppamento per Anno e Settimana
+        const groups = logs.reduce((acc, log) => {
+            const key = `${log.year}-W${log.week}`;
+            if (!acc[key]) acc[key] = { logs: [], weekDelta: 0 };
+            acc[key].logs.push(log);
+            acc[key].weekDelta += log.delta;
             totalDelta += log.delta;
-            const d = new Date(log.date);
-            const formattedDate = d.toLocaleDateString('it-IT', { weekday: 'short', day: '2-digit', month: '2-digit' });
-            
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td><strong>${formattedDate}</strong></td>
-                <td>${log.entry} - ${log.exit}</td>
-                <td>${log.break} min</td>
-                <td style="color: var(--text-secondary)">${log.target}h</td>
-                <td class="${log.delta >= 0 ? 'positive' : 'negative'}">
-                    <span class="status-pill">${formatMinutes(log.delta)}</span>
-                </td>
-                <td><button class="btn-delete" onclick="deleteEntry(${log.id})">Elimina</button></td>
+            return acc;
+        }, {});
+
+        Object.keys(groups).forEach(key => {
+            const group = groups[key];
+            const details = document.createElement('details');
+            details.open = true; // Inizia aperto
+
+            const summary = document.createElement('summary');
+            summary.innerHTML = `
+                <span class="week-title">Settimana ${key.split('-W')[1]} (${key.split('-')[0]})</span>
+                <div class="week-info">
+                    <span class="week-badge ${group.weekDelta >= 0 ? 'positive' : 'negative'}">
+                        Settimana: ${formatMinutes(group.weekDelta)}
+                    </span>
+                    <span>▾</span>
+                </div>
             `;
-            tbody.appendChild(row);
+
+            const tableWrapper = document.createElement('div');
+            tableWrapper.className = 'table-container';
+            
+            let tableHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Orario</th>
+                            <th>Pausa</th>
+                            <th>Saldo</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            group.logs.forEach(log => {
+                const d = new Date(log.date);
+                const formattedDate = d.toLocaleDateString('it-IT', { weekday: 'short', day: '2-digit', month: '2-digit' });
+                tableHTML += `
+                    <tr>
+                        <td><strong>${formattedDate}</strong></td>
+                        <td>${log.entry} - ${log.exit}</td>
+                        <td style="color:var(--text-secondary)">${log.break}m</td>
+                        <td class="${log.delta >= 0 ? 'positive' : 'negative'}"><strong>${formatMinutes(log.delta)}</strong></td>
+                        <td><button class="btn-delete" onclick="deleteEntry(${log.id})">×</button></td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `</tbody></table>`;
+            tableWrapper.innerHTML = tableHTML;
+            
+            details.appendChild(summary);
+            details.appendChild(tableWrapper);
+            container.appendChild(details);
         });
 
         balanceEl.innerText = formatMinutes(totalDelta);
