@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TimeTracker - Live Badge</title>
+    <title>TimeTracker - Manual Badge</title>
     <style>
         :root {
             --bg-color: #000000;
@@ -42,12 +42,11 @@
             border: 1px solid var(--border-color);
         }
 
-        /* Status Badge */
         .status-banner {
             display: none;
-            background: rgba(10, 132, 255, 0.1);
-            border: 1px solid var(--accent-color);
-            color: var(--accent-color);
+            background: rgba(48, 209, 88, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
             padding: 10px;
             border-radius: 10px;
             text-align: center;
@@ -73,7 +72,6 @@
             outline: none;
         }
 
-        /* Pulsanti Dinamici */
         .btn-main {
             width: 100%;
             color: white;
@@ -83,13 +81,13 @@
             font-weight: 700;
             font-size: 1.1rem;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: opacity 0.2s;
         }
         .btn-in { background: var(--accent-color); }
-        .btn-out { background: var(--warning); color: black; }
+        .btn-out { background: var(--success); color: white; }
 
         .backup-section { display: flex; gap: 8px; margin-bottom: 20px; }
-        .btn-util { flex: 1; background: #1c1c1e; border: 1px solid #333; color: #8e8e93; padding: 10px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; border: none; cursor: pointer; }
+        .btn-util { flex: 1; background: #1c1c1e; border: 1px solid #333; color: #8e8e93; padding: 10px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; cursor: pointer; }
         
         .week-box { background: var(--card-bg); border-radius: var(--border-radius); margin-bottom: 12px; border: 1px solid var(--border-color); overflow: hidden; }
         .week-header { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
@@ -111,22 +109,22 @@
     </header>
 
     <div class="input-card">
-        <div id="statusBanner" class="status-banner">✨ In servizio dalle <span id="startTimeDisplay">--:--</span></div>
+        <div id="statusBanner" class="status-banner">🟢 Sessione attiva (Entrata: <span id="startTimeDisplay">--:--</span>)</div>
         
         <div class="grid-inputs">
             <div class="field"><label>Data</label><input type="date" id="d_date"></div>
             <div class="field"><label>Pausa (min)</label><input type="number" id="d_break" value="30"></div>
-            <div class="field"><label>Ingresso</label><input type="time" id="d_in"></div>
-            <div class="field"><label>Uscita</label><input type="time" id="d_out"></div>
+            <div class="field"><label>Ingresso</label><input type="time" id="d_in" value="08:00"></div>
+            <div class="field"><label>Uscita</label><input type="time" id="d_out" value="16:00"></div>
         </div>
         
-        <button id="actionBtn" class="btn-main btn-in" onclick="handleAction()">Entra Ora</button>
-        <button id="resetBtn" class="btn-util" style="margin-top:10px; width:100%; display:none" onclick="resetLive()">Annulla Timbrata</button>
+        <button id="actionBtn" class="btn-main btn-in" onclick="handleAction()">Registra Entrata</button>
+        <button id="resetBtn" class="btn-util" style="margin-top:10px; width:100%; display:none; border:none;" onclick="resetLive()">Annulla Sessione</button>
     </div>
 
     <div class="backup-section">
-        <button class="btn-util" onclick="exportData()">📦 BACKUP</button>
-        <button class="btn-util" onclick="importData()">📥 CARICA</button>
+        <button class="btn-util" onclick="exportData()" style="border:none">📦 BACKUP</button>
+        <button class="btn-util" onclick="importData()" style="border:none">📥 CARICA</button>
     </div>
 
     <div id="history"></div>
@@ -154,56 +152,50 @@
         const inputOut = document.getElementById('d_out');
 
         if (activeSession) {
-            btn.innerText = "Esci Ora";
+            btn.innerText = "Registra Uscita";
             btn.className = "btn-main btn-out";
             banner.style.display = "block";
             resetBtn.style.display = "block";
             document.getElementById('startTimeDisplay').innerText = activeSession.in;
             inputIn.value = activeSession.in;
-            inputIn.disabled = true;
-            inputOut.value = getCurrentTime();
+            // Lasciamo l'input abilitato così se hai sbagliato l'ora di ingresso puoi correggerla prima di chiudere
         } else {
-            btn.innerText = "Entra Ora";
+            btn.innerText = "Registra Entrata";
             btn.className = "btn-main btn-in";
             banner.style.display = "none";
             resetBtn.style.display = "none";
-            inputIn.disabled = false;
-            inputIn.value = "08:00";
-            inputOut.value = "16:00";
         }
     }
 
-    function getCurrentTime() {
-        const now = new Date();
-        return now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-    }
-
     function handleAction() {
+        const timeIn = document.getElementById('d_in').value;
+        const timeOut = document.getElementById('d_out').value;
+        const date = document.getElementById('d_date').value;
+
         if (!activeSession) {
-            // Entrata
-            const timeIn = getCurrentTime();
-            activeSession = { in: timeIn, date: document.getElementById('d_date').value };
+            // Registra solo l'entrata
+            activeSession = { in: timeIn, date: date };
             localStorage.setItem('activeSession', JSON.stringify(activeSession));
         } else {
-            // Uscita
-            completeEntry();
+            // Registra l'uscita e calcola
+            completeEntry(date, timeIn, timeOut);
         }
         updateUI();
     }
 
-    function completeEntry() {
-        const d_date = activeSession.date;
-        const d_in = activeSession.in;
-        const d_out = getCurrentTime();
+    function completeEntry(d_date, d_in, d_out) {
         const realBreak = parseInt(document.getElementById('d_break').value) || 0;
-
         const [h1, m1] = d_in.split(':').map(Number);
         const [h2, m2] = d_out.split(':').map(Number);
         
         const presence = (h2 * 60 + m2) - (h1 * 60 + m1);
+        if (presence <= 0) {
+            alert("L'ora di uscita deve essere successiva all'entrata!");
+            return;
+        }
+
         const isFri = new Date(d_date).getDay() === 5;
         const target = isFri ? FRIDAY_TARGET : TARGET_MINUTES;
-
         const extraBreak = (!isFri && realBreak > MAX_FREE_BREAK) ? (realBreak - MAX_FREE_BREAK) : 0;
         const delta = presence - target - extraBreak;
 
@@ -216,7 +208,7 @@
     }
 
     function resetLive() {
-        if(confirm("Annullare la timbrata di ingresso attuale?")) {
+        if(confirm("Annullare la sessione attuale?")) {
             activeSession = null;
             localStorage.removeItem('activeSession');
             updateUI();
@@ -300,7 +292,12 @@
         input.onchange = e => {
             const reader = new FileReader();
             reader.readAsText(e.target.files[0]);
-            reader.onload = e => { logs = JSON.parse(e.target.result); save(); };
+            reader.onload = e => { 
+                try {
+                    logs = JSON.parse(e.target.result); 
+                    save(); 
+                } catch(err) { alert("File non valido"); }
+            };
         };
         input.click();
     }
