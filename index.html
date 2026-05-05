@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TimeTracker Pro</title>
+    <title>TimeTracker - Precision Mode</title>
     <style>
         :root {
             --bg-color: #000000;
@@ -14,57 +14,57 @@
             --success: #30d158;
             --danger: #ff453a;
             --border-color: #38383a;
-            --border-radius: 16px;
+            --border-radius: 18px;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background-color: var(--bg-color); color: var(--text-primary); padding: 20px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 500px; animation: fadeIn 0.5s ease; }
+        .container { width: 100%; max-width: 480px; }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
+        /* Header Estetico */
         .kpi-container {
-            background: linear-gradient(145deg, #2c2c2e 0%, #1c1c1e 100%);
-            padding: 35px 20px;
-            border-radius: 24px;
+            background: linear-gradient(180deg, #2c2c2e 0%, #1c1c1e 100%);
+            padding: 30px 20px;
+            border-radius: 28px;
             text-align: center;
             margin-bottom: 25px;
             border: 1px solid var(--border-color);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
         }
 
         .clock-icon {
-            display: inline-block;
+            width: 40px;
+            height: 40px;
+            margin-bottom: 12px;
             color: var(--accent-color);
-            width: 32px;
-            height: 32px;
-            margin-bottom: 8px;
+            filter: drop-shadow(0 0 8px rgba(10, 132, 255, 0.3));
         }
 
-        .kpi-label { color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-        .kpi-value { font-size: 3.8rem; font-weight: 800; margin: 5px 0; letter-spacing: -2px; display: flex; align-items: center; justify-content: center; }
+        .kpi-value { font-size: 3.8rem; font-weight: 800; margin: 5px 0; letter-spacing: -2px; line-height: 1; }
+        .kpi-label { color: var(--text-secondary); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
 
+        /* Card Input */
         .input-card {
             background: var(--card-bg);
-            padding: 24px;
+            padding: 22px;
             border-radius: var(--border-radius);
             margin-bottom: 25px;
             border: 1px solid var(--border-color);
         }
-        .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
-        .field { display: flex; flex-direction: column; gap: 8px; }
-        label { color: var(--text-secondary); font-size: 0.75rem; font-weight: 600; margin-left: 4px; }
+        .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+        .field { display: flex; flex-direction: column; gap: 6px; }
+        label { color: var(--text-secondary); font-size: 0.7rem; font-weight: 700; margin-left: 4px; }
         
         input {
             background: #2c2c2e;
             border: 1px solid transparent;
             color: white;
-            padding: 14px;
+            padding: 12px;
             border-radius: 12px;
             font-size: 1rem;
-            outline: none;
+            transition: all 0.2s;
         }
-        input:focus { border-color: var(--accent-color); background: #3a3a3c; }
+        input:focus { border-color: var(--accent-color); background: #3a3a3c; outline: none; }
         
         .btn-submit {
             width: 100%;
@@ -74,136 +74,113 @@
             padding: 16px;
             border-radius: 14px;
             font-weight: 700;
-            font-size: 1.05rem;
+            font-size: 1rem;
             cursor: pointer;
+            box-shadow: 0 4px 12px rgba(10, 132, 255, 0.2);
         }
+        .btn-submit:active { transform: scale(0.98); }
 
-        .backup-controls { display: flex; gap: 10px; margin-bottom: 20px; }
-        .btn-backup {
-            flex: 1;
-            background: transparent;
-            color: var(--text-secondary);
-            border: 1px solid var(--border-color);
-            padding: 10px;
-            border-radius: 10px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
+        /* Lista Storico */
         .week-box {
             background: var(--card-bg);
             border-radius: var(--border-radius);
+            margin-bottom: 12px;
             border: 1px solid var(--border-color);
-            margin-bottom: 15px;
             overflow: hidden;
         }
-        .week-header {
-            padding: 18px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            background: rgba(255,255,255,0.02);
-        }
-        .week-title { font-weight: 700; font-size: 0.95rem; }
-        .week-delta { font-weight: 700; font-size: 0.9rem; padding: 6px 12px; border-radius: 10px; background: rgba(0,0,0,0.3); }
-
+        .week-header { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .week-title { font-weight: 700; font-size: 0.9rem; }
+        
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 12px 20px; color: var(--text-secondary); font-size: 0.65rem; text-transform: uppercase; background: rgba(0,0,0,0.1); }
-        td { padding: 14px 20px; border-bottom: 1px solid #2c2c2e; font-size: 0.9rem; }
+        td { padding: 14px 20px; border-top: 1px solid #2c2c2e; font-size: 0.85rem; }
         
         .pos { color: var(--success); }
         .neg { color: var(--danger); }
-        .btn-del { color: #555; background: none; border: none; font-size: 1.2rem; cursor: pointer; }
+        .btn-del { color: #444; background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0 5px; }
 
+        .backup-section { display: flex; gap: 8px; margin-bottom: 20px; }
+        .btn-util { flex: 1; background: #1c1c1e; border: 1px solid #333; color: #8e8e93; padding: 8px; border-radius: 8px; font-size: 0.65rem; font-weight: 600; cursor: pointer; }
+        
         .hidden { display: none; }
+        .small-info { font-size: 0.65rem; color: #555; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header class="kpi-container">
-        <svg class="clock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <polyline points="12 6 12 12 16 14"></polyline>
+        <svg class="clock-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m4-2a8 8 0 11-16 0 8 8 0 0116 0z" />
         </svg>
         <div class="kpi-label">Saldo Settimanale</div>
         <div id="mainBalance" class="kpi-value">0h 0m</div>
-        <div style="font-size: 0.75rem; color: var(--text-secondary); opacity: 0.7;">Target: 7h 30m (3gg totali)</div>
+        <div style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 8px;">
+            Target 8h presenza <span style="opacity:0.5">|</span> Max Pausa 30m
+        </div>
     </header>
 
     <div class="input-card">
         <div class="grid-inputs">
             <div class="field"><label>Data</label><input type="date" id="d_date"></div>
-            <div class="field"><label>Pausa (min)</label><input type="number" id="d_break" value="30"></div>
+            <div class="field"><label>Pausa Reale (min)</label><input type="number" id="d_break" value="30"></div>
             <div class="field"><label>Ingresso</label><input type="time" id="d_in" value="08:00"></div>
             <div class="field"><label>Uscita</label><input type="time" id="d_out" value="16:00"></div>
         </div>
-        <button class="btn-submit" onclick="addEntry()">Registra Sessione</button>
+        <button class="btn-submit" onclick="addEntry()">Registra Giornata</button>
     </div>
 
-    <div class="backup-controls">
-        <button class="btn-backup" onclick="exportData()">📤 Esporta Backup</button>
-        <button class="btn-backup" onclick="importData()">📥 Importa Backup</button>
+    <div class="backup-section">
+        <button class="btn-util" onclick="exportData()">📦 BACKUP DATI</button>
+        <button class="btn-util" onclick="importData()">📥 CARICA DATI</button>
     </div>
 
     <div id="history"></div>
 </div>
 
 <script>
-    // TARGET MODIFICATO: 7.5 ore (7h 30m) per essere in pari con 8 ore di presenza totali
-    const TARGETS = { standard: 7.5, friday: 6 }; 
-    document.getElementById('d_date').valueAsDate = new Date();
+    // Configurazione: Target 8 ore (480 min). La pausa di 30 min è "inclusa" nel target di presenza.
+    // In pratica: 16:00 - 08:00 = 480 min. Se pausa <= 30, Delta = 0.
+    const TARGET_MINUTES = 8 * 60; 
+    const FRIDAY_TARGET = 6 * 60;
+    const MAX_FREE_BREAK = 30;
 
-    let logs = JSON.parse(localStorage.getItem('timeLogs_v3')) || [];
+    document.getElementById('d_date').valueAsDate = new Date();
+    let logs = JSON.parse(localStorage.getItem('timeLogs_v6')) || [];
 
     function getISOWeek(date) {
         const d = new Date(date);
         d.setHours(0,0,0,0);
         d.setDate(d.getDate() + 4 - (d.getDay() || 7));
-        const yearStart = new Date(d.getFullYear(),0,1);
-        const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-        return `${d.getFullYear()}-W${weekNo}`;
+        return `${d.getFullYear()}-W${Math.ceil((((d - new Date(d.getFullYear(),0,1)) / 86400000) + 1) / 7)}`;
     }
 
     function addEntry() {
-        const dateVal = document.getElementById('d_date').value;
-        const inVal = document.getElementById('d_in').value;
-        const outVal = document.getElementById('d_out').value;
-        const breakVal = parseInt(document.getElementById('d_break').value) || 0;
+        const d_date = document.getElementById('d_date').value;
+        const d_in = document.getElementById('d_in').value;
+        const d_out = document.getElementById('d_out').value;
+        const realBreak = parseInt(document.getElementById('d_break').value) || 0;
 
-        if(!dateVal || !inVal || !outVal) return;
-
-        const d = new Date(dateVal);
-        const [h1, m1] = inVal.split(':').map(Number);
-        const [h2, m2] = outVal.split(':').map(Number);
+        const [h1, m1] = d_in.split(':').map(Number);
+        const [h2, m2] = d_out.split(':').map(Number);
         
-        let workedMinutes = (h2 * 60 + m2) - (h1 * 60 + m1);
-        const isFri = d.getDay() === 5;
-        
-        // Target in minuti: 7.5 ore = 450 minuti
-        const targetMin = (isFri ? TARGETS.friday : TARGETS.standard) * 60;
-        const pause = isFri ? 0 : breakVal;
-        
-        const delta = workedMinutes - pause - targetMin;
+        const presence = (h2 * 60 + m2) - (h1 * 60 + m1);
+        const isFri = new Date(d_date).getDay() === 5;
+        const target = isFri ? FRIDAY_TARGET : TARGET_MINUTES;
 
-        logs.push({
-            id: Date.now(),
-            date: dateVal,
-            weekID: getISOWeek(d),
-            in: inVal,
-            out: outVal,
-            pause: pause,
-            delta: delta
-        });
+        // LOGICA RICHIESTA: 
+        // Solo la parte di pausa che ECCEDE i 30 min viene sottratta dal saldo.
+        const extraBreak = (!isFri && realBreak > MAX_FREE_BREAK) ? (realBreak - MAX_FREE_BREAK) : 0;
+        
+        // Delta = Presenza effettiva rispetto all'orario teorico - l'eccedenza pausa
+        const delta = presence - target - extraBreak;
 
+        logs.push({ id: Date.now(), date: d_date, weekID: getISOWeek(d_date), in: d_in, out: d_out, pause: realBreak, delta: delta });
         logs.sort((a,b) => new Date(b.date) - new Date(a.date));
         save();
     }
 
     function save() {
-        localStorage.setItem('timeLogs_v3', JSON.stringify(logs));
+        localStorage.setItem('timeLogs_v6', JSON.stringify(logs));
         render();
     }
 
@@ -217,7 +194,6 @@
         const container = document.getElementById('history');
         const mainBal = document.getElementById('mainBalance');
         container.innerHTML = '';
-        
         const currentWeekID = getISOWeek(new Date());
         let currentWeekTotal = 0;
         const groups = {};
@@ -229,32 +205,26 @@
             if(l.weekID === currentWeekID) currentWeekTotal += l.delta;
         });
 
-        const sortedWeekIDs = Object.keys(groups).sort().reverse();
-
-        sortedWeekIDs.forEach(wId => {
+        Object.keys(groups).sort().reverse().forEach(wId => {
             const data = groups[wId];
-            const isCurrent = (wId === currentWeekID);
-            
+            const isCurrent = wId === currentWeekID;
             const div = document.createElement('div');
             div.className = 'week-box';
             div.innerHTML = `
                 <div class="week-header" onclick="this.nextElementSibling.classList.toggle('hidden')">
-                    <span class="week-title">${wId.replace('-W', ' · Settimana ')} ${isCurrent ? '<span style="color:var(--accent-color); font-size:0.7rem; margin-left:5px;">● CORRENTE</span>' : ''}</span>
-                    <span class="week-delta ${data.sum >= 0 ? 'pos' : 'neg'}">${fmt(data.sum)}</span>
+                    <span class="week-title">Settimana ${wId.split('W')[1]}</span>
+                    <span class="${data.sum >= 0 ? 'pos' : 'neg'}" style="font-weight:700">${fmt(data.sum)}</span>
                 </div>
-                <div class="table-wrapper ${!isCurrent ? 'hidden' : ''}">
+                <div class="${isCurrent ? '' : 'hidden'}">
                     <table>
-                        <thead><tr><th>Giorno</th><th>Ore</th><th>Δ</th><th></th></tr></thead>
-                        <tbody>
-                            ${data.items.map(i => `
-                                <tr>
-                                    <td><strong>${new Date(i.date).toLocaleDateString('it-IT',{weekday:'short', day:'2-digit'})}</strong></td>
-                                    <td>${i.in}–${i.out}</td>
-                                    <td class="${i.delta >= 0 ? 'pos' : 'neg'}"><strong>${fmt(i.delta)}</strong></td>
-                                    <td style="text-align:right"><button class="btn-del" onclick="event.stopPropagation(); del(${i.id})">×</button></td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
+                        ${data.items.map(i => `
+                            <tr>
+                                <td><span style="text-transform:capitalize">${new Date(i.date).toLocaleDateString('it-IT',{weekday:'short'})}</span> <strong>${new Date(i.date).toLocaleDateString('it-IT',{day:'2-digit'})}</strong></td>
+                                <td>${i.in}–${i.out} <div class="small-info">Pausa: ${i.pause}m</div></td>
+                                <td class="${i.delta >= 0 ? 'pos' : 'neg'}" style="text-align:right"><strong>${fmt(i.delta)}</strong></td>
+                                <td style="width:20px; text-align:right"><button class="btn-del" onclick="event.stopPropagation(); del(${i.id})">×</button></td>
+                            </tr>
+                        `).join('')}
                     </table>
                 </div>
             `;
@@ -266,31 +236,24 @@
     }
 
     function exportData() {
-        if (logs.length === 0) return alert("Nessun dato presente.");
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(logs));
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", "tracker_backup_" + new Date().toISOString().split('T')[0] + ".json");
-        document.body.appendChild(downloadAnchorNode);
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
+        const blob = new Blob([JSON.stringify(logs)], {type: "application/json"});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `backup_tempi_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
     }
 
     function importData() {
         const input = document.createElement('input');
         input.type = 'file';
-        input.accept = '.json';
         input.onchange = e => {
-            const file = e.target.files[0];
             const reader = new FileReader();
-            reader.readAsText(file, 'UTF-8');
-            reader.onload = e => {
-                try {
-                    logs = JSON.parse(e.target.result);
-                    save();
-                } catch(err) { alert("File non valido."); }
-            }
-        }
+            reader.readAsText(e.target.files[0]);
+            reader.onload = e => { 
+                try { logs = JSON.parse(e.target.result); save(); } 
+                catch(err) { alert("File non valido"); }
+            };
+        };
         input.click();
     }
 
