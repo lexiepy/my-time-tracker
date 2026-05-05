@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TimeTracker - Mobile Fix</title>
+    <title>TimeTracker - Live Badge</title>
     <style>
         :root {
             --bg-color: #000000;
@@ -13,6 +13,7 @@
             --text-secondary: #8e8e93;
             --success: #30d158;
             --danger: #ff453a;
+            --warning: #ff9f0a;
             --border-color: #38383a;
             --border-radius: 18px;
         }
@@ -30,7 +31,6 @@
             border: 1px solid var(--border-color);
         }
 
-        .clock-icon { width: 35px; height: 35px; margin-bottom: 10px; color: var(--accent-color); }
         .kpi-value { font-size: 3.5rem; font-weight: 800; margin: 5px 0; letter-spacing: -2px; line-height: 1; }
         .kpi-label { color: var(--text-secondary); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
 
@@ -42,54 +42,40 @@
             border: 1px solid var(--border-color);
         }
 
-        /* FIX: Grid layout per evitare overflow */
-        .grid-inputs { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 12px; 
-            margin-bottom: 20px; 
+        /* Status Badge */
+        .status-banner {
+            display: none;
+            background: rgba(10, 132, 255, 0.1);
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 15px;
         }
+
+        .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+        label { color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; }
         
-        .field { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 6px; 
-            min-width: 0; /* Forza il contenuto a stare nel container */
-            overflow: hidden; 
-        }
-        
-        label { color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; margin-left: 2px; }
-        
-        /* FIX: Reset stili per mobile */
         input {
             background: #2c2c2e;
             border: 1px solid transparent;
             color: white;
-            padding: 12px 8px; /* Padding bilanciato */
+            padding: 12px 8px;
             border-radius: 12px;
             font-size: 1rem;
             width: 100%;
-            display: block;
-            -webkit-appearance: none; /* Rimuove stile iOS */
+            -webkit-appearance: none;
             appearance: none;
             outline: none;
         }
-        
-        /* Rimuove le freccette che spostano il testo */
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        
-        /* Fix specifico per l'icona orologio nativa che taglia il testo */
-        input::-webkit-calendar-picker-indicator {
-            filter: invert(1);
-            margin-left: 0;
-            padding: 0;
-            cursor: pointer;
-        }
 
-        .btn-submit {
+        /* Pulsanti Dinamici */
+        .btn-main {
             width: 100%;
-            background: var(--accent-color);
             color: white;
             border: none;
             padding: 18px;
@@ -97,20 +83,22 @@
             font-weight: 700;
             font-size: 1.1rem;
             cursor: pointer;
+            transition: all 0.3s;
         }
+        .btn-in { background: var(--accent-color); }
+        .btn-out { background: var(--warning); color: black; }
 
         .backup-section { display: flex; gap: 8px; margin-bottom: 20px; }
-        .btn-util { flex: 1; background: #1c1c1e; border: 1px solid #333; color: #8e8e93; padding: 10px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; }
+        .btn-util { flex: 1; background: #1c1c1e; border: 1px solid #333; color: #8e8e93; padding: 10px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; border: none; cursor: pointer; }
         
         .week-box { background: var(--card-bg); border-radius: var(--border-radius); margin-bottom: 12px; border: 1px solid var(--border-color); overflow: hidden; }
         .week-header { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
         
         table { width: 100%; border-collapse: collapse; }
         td { padding: 14px 15px; border-top: 1px solid #2c2c2e; font-size: 0.85rem; }
-        
         .pos { color: var(--success); }
         .neg { color: var(--danger); }
-        .btn-del { color: #444; background: none; border: none; font-size: 1.2rem; }
+        .btn-del { color: #444; background: none; border: none; font-size: 1.2rem; padding: 5px; cursor: pointer; }
         .hidden { display: none; }
     </style>
 </head>
@@ -118,21 +106,22 @@
 
 <div class="container">
     <header class="kpi-container">
-        <svg class="clock-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m4-2a8 8 0 11-16 0 8 8 0 0116 0z" />
-        </svg>
         <div class="kpi-label">Saldo Settimanale</div>
         <div id="mainBalance" class="kpi-value">0h 0m</div>
     </header>
 
     <div class="input-card">
+        <div id="statusBanner" class="status-banner">✨ In servizio dalle <span id="startTimeDisplay">--:--</span></div>
+        
         <div class="grid-inputs">
             <div class="field"><label>Data</label><input type="date" id="d_date"></div>
-            <div class="field"><label>Pausa Reale (min)</label><input type="number" id="d_break" value="30"></div>
-            <div class="field"><label>Ingresso</label><input type="time" id="d_in" value="08:00"></div>
-            <div class="field"><label>Uscita</label><input type="time" id="d_out" value="16:00"></div>
+            <div class="field"><label>Pausa (min)</label><input type="number" id="d_break" value="30"></div>
+            <div class="field"><label>Ingresso</label><input type="time" id="d_in"></div>
+            <div class="field"><label>Uscita</label><input type="time" id="d_out"></div>
         </div>
-        <button class="btn-submit" onclick="addEntry()">Registra Giornata</button>
+        
+        <button id="actionBtn" class="btn-main btn-in" onclick="handleAction()">Entra Ora</button>
+        <button id="resetBtn" class="btn-util" style="margin-top:10px; width:100%; display:none" onclick="resetLive()">Annulla Timbrata</button>
     </div>
 
     <div class="backup-section">
@@ -148,23 +137,65 @@
     const FRIDAY_TARGET = 6 * 60;
     const MAX_FREE_BREAK = 30;
 
-    document.getElementById('d_date').valueAsDate = new Date();
     let logs = JSON.parse(localStorage.getItem('timeLogs_v6')) || [];
+    let activeSession = JSON.parse(localStorage.getItem('activeSession')) || null;
 
-    function getISOWeek(date) {
-        const d = new Date(date);
-        d.setHours(0,0,0,0);
-        d.setDate(d.getDate() + 4 - (d.getDay() || 7));
-        return `${d.getFullYear()}-W${Math.ceil((((d - new Date(d.getFullYear(),0,1)) / 86400000) + 1) / 7)}`;
+    function init() {
+        document.getElementById('d_date').valueAsDate = new Date();
+        updateUI();
+        render();
     }
 
-    function addEntry() {
-        const d_date = document.getElementById('d_date').value;
-        const d_in = document.getElementById('d_in').value;
-        const d_out = document.getElementById('d_out').value;
-        const realBreak = parseInt(document.getElementById('d_break').value) || 0;
+    function updateUI() {
+        const btn = document.getElementById('actionBtn');
+        const banner = document.getElementById('statusBanner');
+        const resetBtn = document.getElementById('resetBtn');
+        const inputIn = document.getElementById('d_in');
+        const inputOut = document.getElementById('d_out');
 
-        if(!d_date || !d_in || !d_out) return;
+        if (activeSession) {
+            btn.innerText = "Esci Ora";
+            btn.className = "btn-main btn-out";
+            banner.style.display = "block";
+            resetBtn.style.display = "block";
+            document.getElementById('startTimeDisplay').innerText = activeSession.in;
+            inputIn.value = activeSession.in;
+            inputIn.disabled = true;
+            inputOut.value = getCurrentTime();
+        } else {
+            btn.innerText = "Entra Ora";
+            btn.className = "btn-main btn-in";
+            banner.style.display = "none";
+            resetBtn.style.display = "none";
+            inputIn.disabled = false;
+            inputIn.value = "08:00";
+            inputOut.value = "16:00";
+        }
+    }
+
+    function getCurrentTime() {
+        const now = new Date();
+        return now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+    }
+
+    function handleAction() {
+        if (!activeSession) {
+            // Entrata
+            const timeIn = getCurrentTime();
+            activeSession = { in: timeIn, date: document.getElementById('d_date').value };
+            localStorage.setItem('activeSession', JSON.stringify(activeSession));
+        } else {
+            // Uscita
+            completeEntry();
+        }
+        updateUI();
+    }
+
+    function completeEntry() {
+        const d_date = activeSession.date;
+        const d_in = activeSession.in;
+        const d_out = getCurrentTime();
+        const realBreak = parseInt(document.getElementById('d_break').value) || 0;
 
         const [h1, m1] = d_in.split(':').map(Number);
         const [h2, m2] = d_out.split(':').map(Number);
@@ -178,7 +209,25 @@
 
         logs.push({ id: Date.now(), date: d_date, weekID: getISOWeek(d_date), in: d_in, out: d_out, pause: realBreak, delta: delta });
         logs.sort((a,b) => new Date(b.date) - new Date(a.date));
+        
+        activeSession = null;
+        localStorage.removeItem('activeSession');
         save();
+    }
+
+    function resetLive() {
+        if(confirm("Annullare la timbrata di ingresso attuale?")) {
+            activeSession = null;
+            localStorage.removeItem('activeSession');
+            updateUI();
+        }
+    }
+
+    function getISOWeek(date) {
+        const d = new Date(date);
+        d.setHours(0,0,0,0);
+        d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+        return `${d.getFullYear()}-W${Math.ceil((((d - new Date(d.getFullYear(),0,1)) / 86400000) + 1) / 7)}`;
     }
 
     function save() {
@@ -214,7 +263,7 @@
             div.className = 'week-box';
             div.innerHTML = `
                 <div class="week-header" onclick="this.nextElementSibling.classList.toggle('hidden')">
-                    <span style="font-weight:700; font-size:0.9rem">Settimana ${wId.split('W')[1]}</span>
+                    <span style="font-weight:700">Settimana ${wId.split('W')[1]}</span>
                     <span class="${data.sum >= 0 ? 'pos' : 'neg'}" style="font-weight:700">${fmt(data.sum)}</span>
                 </div>
                 <div class="${isCurrent ? '' : 'hidden'}">
@@ -222,7 +271,7 @@
                         ${data.items.map(i => `
                             <tr>
                                 <td><strong>${new Date(i.date).toLocaleDateString('it-IT',{day:'2-digit', month:'short'})}</strong></td>
-                                <td>${i.in}–${i.out} <div style="font-size:0.65rem; color:#555">Pausa: ${i.pause}m</div></td>
+                                <td>${i.in}–${i.out} <div style="font-size:0.65rem; opacity:0.6">Pausa: ${i.pause}m</div></td>
                                 <td class="${i.delta >= 0 ? 'pos' : 'neg'}" style="text-align:right"><strong>${fmt(i.delta)}</strong></td>
                                 <td style="text-align:right"><button class="btn-del" onclick="event.stopPropagation(); del(${i.id})">×</button></td>
                             </tr>
@@ -257,7 +306,8 @@
     }
 
     window.del = (id) => { if(confirm('Eliminare?')) { logs = logs.filter(l => l.id !== id); save(); } };
-    render();
+    
+    init();
 </script>
 </body>
 </html>
