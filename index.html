@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeTracker Pro</title>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --card-bg: #1c1c1e;
+            --accent-color: #0a84ff;
+            --text-primary: #ffffff;
+            --text-secondary: #8e8e93;
+            --success: #30d158;
+            --danger: #ff453a;
+            --border-radius: 12px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container { max-width: 500px; margin: 0 auto; }
+
+        /* Header & KPI */
+        header { text-align: center; margin-bottom: 30px; }
+        .kpi-card {
+            background: linear-gradient(145deg, #1c1c1e, #2c2c2e);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            margin-bottom: 25px;
+            border: 1px solid #38383a;
+        }
+        .kpi-label { color: var(--text-secondary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; }
+        .kpi-value { font-size: 2.5rem; font-weight: 700; margin-top: 5px; }
+        .positive { color: var(--success); }
+        .negative { color: var(--danger); }
+
+        /* Form Style */
+        .input-group {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-bottom: 25px;
+        }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        label { display: block; color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 5px; margin-left: 5px; }
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            background: #2c2c2e;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+        }
+        input:focus { ring: 2px solid var(--accent-color); }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            border-radius: 12px;
+            border: none;
+            background: var(--accent-color);
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        button:active { opacity: 0.7; }
+
+        /* Table Style */
+        .history-title { margin-bottom: 15px; font-size: 1.2rem; font-weight: 600; color: var(--text-secondary); }
+        .log-item {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid var(--accent-color);
+        }
+        .log-info div { font-size: 0.85rem; color: var(--text-secondary); }
+        .log-date { font-weight: 600; color: white; margin-bottom: 2px; }
+        .log-delta { font-weight: 700; }
+        .delete-btn {
+            background: rgba(255, 69, 58, 0.1);
+            color: var(--danger);
+            width: auto;
+            padding: 8px 12px;
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 400px) {
+            .form-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="kpi-card">
+            <div class="kpi-label">Saldo Ore Totale</div>
+            <div id="totalBalance" class="kpi-value">0h 0m</div>
+        </div>
+    </header>
+
+    <div class="input-group">
+        <div class="form-row">
+            <div>
+                <label>Ingresso</label>
+                <input type="time" id="entry" value="09:00">
+            </div>
+            <div>
+                <label>Uscita</label>
+                <input type="time" id="exit" value="18:00">
+            </div>
+        </div>
+        <div class="form-row">
+            <div>
+                <label>Pausa (min)</label>
+                <input type="number" id="break" value="30">
+            </div>
+            <div>
+                <label>Data</label>
+                <input type="date" id="date">
+            </div>
+        </div>
+        <button onclick="addEntry()">Registra Giornata</button>
+    </div>
+
+    <div class="history-title">Log Recenti</div>
+    <div id="logList"></div>
+</div>
+
+<script>
+    // Configurazione Standard
+    const STD_HOURS_WEEK = 8;
+    const STD_HOURS_FRI = 6;
+
+    // Imposta data odierna come default
+    document.getElementById('date').valueAsDate = new Date();
+
+    let logs = JSON.parse(localStorage.getItem('workLogs')) || [];
+
+    function addEntry() {
+        const entryTime = document.getElementById('entry').value;
+        const exitTime = document.getElementById('exit').value;
+        const breakMin = parseInt(document.getElementById('break').value) || 0;
+        const dateVal = new Date(document.getElementById('date').value);
+
+        if (!entryTime || !exitTime) return alert("Inserisci gli orari!");
+
+        // Calcolo minuti lavorati
+        const [hIn, mIn] = entryTime.split(':').map(Number);
+        const [hOut, mOut] = exitTime.split(':').map(Number);
+        
+        let totalMinutesWorked = (hOut * 60 + mOut) - (hIn * 60 + mIn);
+        
+        // Logica Venerdì vs Altri giorni
+        const isFriday = dateVal.getDay() === 5;
+        const targetMinutes = isFriday ? STD_HOURS_FRI * 60 : STD_HOURS_WEEK * 60;
+        
+        // Sottrai pausa solo se non è venerdì (come da tua richiesta)
+        if (!isFriday) {
+            totalMinutesWorked -= breakMin;
+        }
+
+        const delta = totalMinutesWorked - targetMinutes;
+
+        const entry = {
+            id: Date.now(),
+            date: document.getElementById('date').value,
+            delta: delta,
+            isFriday: isFriday
+        };
+
+        logs.unshift(entry);
+        saveAndRender();
+    }
+
+    function deleteEntry(id) {
+        logs = logs.filter(l => l.id !== id);
+        saveAndRender();
+    }
+
+    function saveAndRender() {
+        localStorage.setItem('workLogs', JSON.stringify(logs));
+        render();
+    }
+
+    function formatMinutes(totalMin) {
+        const sign = totalMin >= 0 ? "+" : "-";
+        const absMin = Math.abs(totalMin);
+        const h = Math.floor(absMin / 60);
+        const m = absMin % 60;
+        return `${sign}${h}h ${m}m`;
+    }
+
+    function render() {
+        const list = document.getElementById('logList');
+        const balanceEl = document.getElementById('totalBalance');
+        list.innerHTML = '';
+        
+        let totalDelta = 0;
+
+        logs.forEach(log => {
+            totalDelta += log.delta;
+            const dateObj = new Date(log.date);
+            const formattedDate = dateObj.toLocaleDateString('it-IT', { weekday: 'short', day: '2-digit', month: 'short' });
+            
+            const item = document.createElement('div');
+            item.className = 'log-item';
+            item.innerHTML = `
+                <div class="log-info">
+                    <div class="log-date">${formattedDate} ${log.isFriday ? ' (Ven)' : ''}</div>
+                    <div>Target: ${log.isFriday ? '6h' : '8h'}</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <span class="log-delta ${log.delta >= 0 ? 'positive' : 'negative'}">${formatMinutes(log.delta)}</span>
+                    <button class="delete-btn" onclick="deleteEntry(${log.id})">Elimina</button>
+                </div>
+            `;
+            list.appendChild(item);
+        });
+
+        balanceEl.innerText = formatMinutes(totalDelta);
+        balanceEl.className = `kpi-value ${totalDelta >= 0 ? 'positive' : 'negative'}`;
+    }
+
+    // Inizializzazione
+    render();
+</script>
+
+</body>
+</html>
