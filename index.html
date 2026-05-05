@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TimeTracker Pro - Weekly</title>
+    <title>TimeTracker - Weekly Reset</title>
     <style>
         :root {
             --bg-color: #000000;
@@ -14,326 +14,228 @@
             --success: #30d158;
             --danger: #ff453a;
             --border-color: #38383a;
-            --border-radius: 12px;
+            --border-radius: 14px;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-primary); padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 600px; }
 
-        .container { width: 100%; max-width: 800px; }
-
-        /* Header & KPI */
-        header { margin-bottom: 30px; text-align: center; }
-        .kpi-card {
-            background: var(--card-bg);
+        .kpi-container {
+            background: linear-gradient(180deg, #1c1c1e 0%, #000000 100%);
             padding: 30px;
             border-radius: var(--border-radius);
+            text-align: center;
+            margin-bottom: 25px;
             border: 1px solid var(--border-color);
-            display: inline-block;
-            min-width: 280px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
-        .kpi-label { color: var(--text-secondary); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
-        .kpi-value { font-size: 3rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+        .kpi-label { color: var(--accent-color); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; }
+        .kpi-value { font-size: 3.5rem; font-weight: 800; margin: 5px 0; letter-spacing: -1px; }
 
-        /* Form */
-        .input-panel {
+        .input-card {
             background: var(--card-bg);
             padding: 20px;
             border-radius: var(--border-radius);
-            margin-bottom: 40px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 15px;
-            align-items: end;
+            margin-bottom: 30px;
             border: 1px solid var(--border-color);
         }
+        .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
         .field { display: flex; flex-direction: column; gap: 5px; }
-        label { color: var(--text-secondary); font-size: 0.75rem; font-weight: 600; padding-left: 4px; }
+        label { color: var(--text-secondary); font-size: 0.75rem; font-weight: 600; margin-left: 5px; }
         input {
             background: #2c2c2e;
             border: 1px solid var(--border-color);
             color: white;
             padding: 12px;
             border-radius: 10px;
-            font-size: 0.9rem;
+            font-size: 1rem;
             outline: none;
         }
-        input:focus { border-color: var(--accent-color); }
         
-        .btn-add {
+        .btn-submit {
+            width: 100%;
             background: var(--accent-color);
             color: white;
             border: none;
-            padding: 12px;
-            border-radius: 10px;
-            font-weight: 600;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1rem;
             cursor: pointer;
-            transition: transform 0.1s;
         }
-        .btn-add:active { transform: scale(0.98); }
 
-        /* Weekly Accordion Style */
-        details {
+        .week-box {
             background: var(--card-bg);
             border-radius: var(--border-radius);
             border: 1px solid var(--border-color);
             margin-bottom: 15px;
             overflow: hidden;
         }
-        summary {
+        .week-header {
+            background: #2c2c2e;
             padding: 15px 20px;
-            cursor: pointer;
-            font-weight: 600;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            list-style: none;
-            background: #2c2c2e;
-        }
-        summary::-webkit-details-marker { display: none; }
-        summary:hover { background: #3a3a3c; }
-
-        .week-info { display: flex; align-items: center; gap: 15px; }
-        .week-title { font-size: 1rem; color: var(--text-primary); }
-        .week-badge { 
-            font-size: 0.85rem; 
-            padding: 4px 10px; 
-            border-radius: 20px; 
-            background: rgba(255,255,255,0.1);
-        }
-
-        /* Table Style */
-        .table-container { overflow-x: auto; }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            min-width: 600px;
-        }
-        th {
-            color: var(--text-secondary);
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            padding: 12px 20px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        td {
-            padding: 12px 20px;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 0.9rem;
-        }
-        tr:last-child td { border-bottom: none; }
-
-        .positive { color: var(--success); }
-        .negative { color: var(--danger); }
-        
-        .btn-delete {
-            background: transparent;
-            color: #ff453a;
-            border: 1px solid #ff453a;
-            padding: 4px 8px;
-            font-size: 0.7rem;
-            border-radius: 6px;
             cursor: pointer;
         }
+        .week-title { font-weight: 700; font-size: 0.9rem; }
+        .week-delta { font-weight: 700; font-size: 0.9rem; padding: 4px 10px; border-radius: 8px; background: rgba(0,0,0,0.3); }
 
-        @media (max-width: 600px) {
-            .input-panel { grid-template-columns: 1fr 1fr; }
-            .btn-add { grid-column: span 2; }
-        }
+        .table-wrapper { overflow-x: auto; padding: 5px; }
+        table { width: 100%; border-collapse: collapse; min-width: 400px; }
+        th { text-align: left; padding: 12px; color: var(--text-secondary); font-size: 0.65rem; text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid #2c2c2e; font-size: 0.85rem; }
+        
+        .pos { color: var(--success); }
+        .neg { color: var(--danger); }
+        .btn-del { color: var(--danger); background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0 10px; opacity: 0.5; }
+        .btn-del:hover { opacity: 1; }
+
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <header>
-        <div class="kpi-card">
-            <div class="kpi-label">Saldo Totale Cumulativo</div>
-            <div id="totalBalance" class="kpi-value">0h 0m</div>
-        </div>
+    <header class="kpi-container">
+        <div class="kpi-label">Saldo Settimana Corrente</div>
+        <div id="mainBalance" class="kpi-value">0h 0m</div>
+        <div id="weekRange" style="font-size: 0.75rem; color: var(--text-secondary);">Recupero basato sui 3 giorni di presenza</div>
     </header>
 
-    <div class="input-panel">
-        <div class="field">
-            <label>Data</label>
-            <input type="date" id="date">
+    <div class="input-card">
+        <div class="grid-inputs">
+            <div class="field"><label>Data</label><input type="date" id="d_date"></div>
+            <div class="field"><label>Pausa (min)</label><input type="number" id="d_break" value="30"></div>
+            <div class="field"><label>Ingresso</label><input type="time" id="d_in" value="09:00"></div>
+            <div class="field"><label>Uscita</label><input type="time" id="d_out" value="18:00"></div>
         </div>
-        <div class="field">
-            <label>Ingresso</label>
-            <input type="time" id="entry" value="09:00">
-        </div>
-        <div class="field">
-            <label>Uscita</label>
-            <input type="time" id="exit" value="18:00">
-        </div>
-        <div class="field">
-            <label>Pausa (min)</label>
-            <input type="number" id="break" value="30">
-        </div>
-        <button class="btn-add" onclick="addEntry()">Aggiungi</button>
+        <button class="btn-submit" onclick="addEntry()">Registra Presenza</button>
     </div>
 
-    <div id="weeklyGroups">
-        <!-- I gruppi settimanali appariranno qui -->
-    </div>
+    <div id="history"></div>
 </div>
 
 <script>
-    const STD_HOURS_WEEK = 8;
-    const STD_HOURS_FRI = 6;
+    const TARGETS = { standard: 8, friday: 6 };
+    document.getElementById('d_date').valueAsDate = new Date();
 
-    document.getElementById('date').valueAsDate = new Date();
+    let logs = JSON.parse(localStorage.getItem('timeLogs_v3')) || [];
 
-    let logs = JSON.parse(localStorage.getItem('workLogs')) || [];
-
-    // Utility: Ottiene il numero della settimana
-    function getWeekNumber(d) {
-        d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-        return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    function getISOWeek(date) {
+        const d = new Date(date);
+        d.setHours(0,0,0,0);
+        d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+        const yearStart = new Date(d.getFullYear(),0,1);
+        const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        return `${d.getFullYear()}-W${weekNo}`;
     }
 
     function addEntry() {
-        const dateInput = document.getElementById('date').value;
-        const entryTime = document.getElementById('entry').value;
-        const exitTime = document.getElementById('exit').value;
-        const breakMin = parseInt(document.getElementById('break').value) || 0;
-        
-        if (!dateInput || !entryTime || !exitTime) return alert("Compila tutti i campi!");
+        const dateVal = document.getElementById('d_date').value;
+        const inVal = document.getElementById('d_in').value;
+        const outVal = document.getElementById('d_out').value;
+        const breakVal = parseInt(document.getElementById('d_break').value) || 0;
 
-        const dateVal = new Date(dateInput);
-        const [hIn, mIn] = entryTime.split(':').map(Number);
-        const [hOut, mOut] = exitTime.split(':').map(Number);
-        
-        let workedMinutes = (hOut * 60 + mOut) - (hIn * 60 + mIn);
-        const isFriday = dateVal.getDay() === 5;
-        const targetMinutes = isFriday ? STD_HOURS_FRI * 60 : STD_HOURS_WEEK * 60;
-        const actualBreak = isFriday ? 0 : breakMin;
-        const delta = workedMinutes - actualBreak - targetMinutes;
+        if(!dateVal || !inVal || !outVal) return;
 
-        const newLog = {
+        const d = new Date(dateVal);
+        const [h1, m1] = inVal.split(':').map(Number);
+        const [h2, m2] = outVal.split(':').map(Number);
+        
+        let worked = (h2 * 60 + m2) - (h1 * 60 + m1);
+        const isFri = d.getDay() === 5;
+        const targetMin = (isFri ? TARGETS.friday : TARGETS.standard) * 60;
+        const pause = isFri ? 0 : breakVal;
+        
+        const delta = worked - pause - targetMin;
+
+        logs.push({
             id: Date.now(),
-            date: dateInput,
-            week: getWeekNumber(dateVal),
-            year: dateVal.getFullYear(),
-            entry: entryTime,
-            exit: exitTime,
-            break: actualBreak,
-            target: targetMinutes / 60,
+            date: dateVal,
+            weekID: getISOWeek(d),
+            in: inVal,
+            out: outVal,
+            pause: pause,
             delta: delta
-        };
+        });
 
-        logs.push(newLog);
-        logs.sort((a, b) => new Date(b.date) - new Date(a.date));
+        logs.sort((a,b) => new Date(b.date) - new Date(a.date));
         save();
     }
 
-    function deleteEntry(id) {
-        if(confirm("Eliminare questa riga?")) {
-            logs = logs.filter(l => l.id !== id);
-            save();
-        }
-    }
-
     function save() {
-        localStorage.setItem('workLogs', JSON.stringify(logs));
+        localStorage.setItem('timeLogs_v3', JSON.stringify(logs));
         render();
     }
 
-    function formatMinutes(totalMin) {
-        const sign = totalMin >= 0 ? "+" : "-";
-        const absMin = Math.abs(totalMin);
-        const h = Math.floor(absMin / 60);
-        const m = absMin % 60;
-        return `${sign}${h}h ${m}m`;
+    function fmt(m) {
+        const s = m >= 0 ? "+" : "-";
+        const a = Math.abs(m);
+        return `${s}${Math.floor(a/60)}h ${a%60}m`;
     }
 
     function render() {
-        const container = document.getElementById('weeklyGroups');
-        const balanceEl = document.getElementById('totalBalance');
+        const container = document.getElementById('history');
+        const mainBal = document.getElementById('mainBalance');
         container.innerHTML = '';
         
-        let totalDelta = 0;
+        const currentWeekID = getISOWeek(new Date());
+        let currentWeekTotal = 0;
+        const groups = {};
 
-        // Raggruppamento per Anno e Settimana
-        const groups = logs.reduce((acc, log) => {
-            const key = `${log.year}-W${log.week}`;
-            if (!acc[key]) acc[key] = { logs: [], weekDelta: 0 };
-            acc[key].logs.push(log);
-            acc[key].weekDelta += log.delta;
-            totalDelta += log.delta;
-            return acc;
-        }, {});
-
-        Object.keys(groups).forEach(key => {
-            const group = groups[key];
-            const details = document.createElement('details');
-            details.open = true; // Inizia aperto
-
-            const summary = document.createElement('summary');
-            summary.innerHTML = `
-                <span class="week-title">Settimana ${key.split('-W')[1]} (${key.split('-')[0]})</span>
-                <div class="week-info">
-                    <span class="week-badge ${group.weekDelta >= 0 ? 'positive' : 'negative'}">
-                        Settimana: ${formatMinutes(group.weekDelta)}
-                    </span>
-                    <span>▾</span>
-                </div>
-            `;
-
-            const tableWrapper = document.createElement('div');
-            tableWrapper.className = 'table-container';
+        logs.forEach(l => {
+            if(!groups[l.weekID]) groups[l.weekID] = { items: [], sum: 0 };
+            groups[l.weekID].items.push(l);
+            groups[l.weekID].sum += l.delta;
             
-            let tableHTML = `
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Data</th>
-                            <th>Orario</th>
-                            <th>Pausa</th>
-                            <th>Saldo</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-            group.logs.forEach(log => {
-                const d = new Date(log.date);
-                const formattedDate = d.toLocaleDateString('it-IT', { weekday: 'short', day: '2-digit', month: '2-digit' });
-                tableHTML += `
-                    <tr>
-                        <td><strong>${formattedDate}</strong></td>
-                        <td>${log.entry} - ${log.exit}</td>
-                        <td style="color:var(--text-secondary)">${log.break}m</td>
-                        <td class="${log.delta >= 0 ? 'positive' : 'negative'}"><strong>${formatMinutes(log.delta)}</strong></td>
-                        <td><button class="btn-delete" onclick="deleteEntry(${log.id})">×</button></td>
-                    </tr>
-                `;
-            });
-
-            tableHTML += `</tbody></table>`;
-            tableWrapper.innerHTML = tableHTML;
-            
-            details.appendChild(summary);
-            details.appendChild(tableWrapper);
-            container.appendChild(details);
+            // Se il log appartiene alla settimana attuale, aggiungi al KPI
+            if(l.weekID === currentWeekID) {
+                currentWeekTotal += l.delta;
+            }
         });
 
-        balanceEl.innerText = formatMinutes(totalDelta);
-        balanceEl.className = `kpi-value ${totalDelta >= 0 ? 'positive' : 'negative'}`;
+        const sortedWeekIDs = Object.keys(groups).sort().reverse();
+
+        sortedWeekIDs.forEach(wId => {
+            const data = groups[wId];
+            const isCurrent = (wId === currentWeekID);
+            
+            const div = document.createElement('div');
+            div.className = 'week-box';
+            div.innerHTML = `
+                <div class="week-header" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                    <span class="week-title">${wId.replace('-W', ' · Settimana ')} ${isCurrent ? '(Corrente)' : ''}</span>
+                    <span class="week-delta ${data.sum >= 0 ? 'pos' : 'neg'}">${fmt(data.sum)}</span>
+                </div>
+                <div class="table-wrapper ${!isCurrent ? 'hidden' : ''}">
+                    <table>
+                        <thead><tr><th>Data</th><th>Orario</th><th>Pausa</th><th>Saldo</th><th></th></tr></thead>
+                        <tbody>
+                            ${data.items.map(i => `
+                                <tr>
+                                    <td><strong>${new Date(i.date).toLocaleDateString('it-IT',{weekday:'short', day:'2-digit'})}</strong></td>
+                                    <td>${i.in}-${i.out}</td>
+                                    <td>${i.pause}m</td>
+                                    <td class="${i.delta >= 0 ? 'pos' : 'neg'}"><strong>${fmt(i.delta)}</strong></td>
+                                    <td><button class="btn-del" onclick="event.stopPropagation(); del(${i.id})">×</button></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+
+        mainBal.innerText = fmt(currentWeekTotal);
+        mainBal.className = `kpi-value ${currentWeekTotal >= 0 ? 'pos' : 'neg'}`;
     }
 
+    window.del = (id) => { if(confirm('Eliminare questa voce?')) { logs = logs.filter(l => l.id !== id); save(); } };
     render();
 </script>
-
 </body>
 </html>
