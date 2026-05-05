@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TimeTracker - Manual Badge</title>
+    <title>TimeTracker - Manuale Rapido</title>
     <style>
         :root {
             --bg-color: #000000;
@@ -13,7 +13,6 @@
             --text-secondary: #8e8e93;
             --success: #30d158;
             --danger: #ff453a;
-            --warning: #ff9f0a;
             --border-color: #38383a;
             --border-radius: 18px;
         }
@@ -42,21 +41,21 @@
             border: 1px solid var(--border-color);
         }
 
-        .status-banner {
-            display: none;
-            background: rgba(48, 209, 88, 0.1);
-            border: 1px solid var(--success);
-            color: var(--success);
-            padding: 10px;
-            border-radius: 10px;
-            text-align: center;
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-bottom: 15px;
+        /* Layout Grid per evitare overflow come in image_2.png */
+        .grid-inputs { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 12px; 
+            margin-bottom: 20px; 
         }
-
-        .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-        .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+        
+        .field { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 6px; 
+            min-width: 0; 
+        }
+        
         label { color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; }
         
         input {
@@ -74,6 +73,7 @@
 
         .btn-main {
             width: 100%;
+            background: var(--accent-color);
             color: white;
             border: none;
             padding: 18px;
@@ -81,22 +81,20 @@
             font-weight: 700;
             font-size: 1.1rem;
             cursor: pointer;
-            transition: opacity 0.2s;
         }
-        .btn-in { background: var(--accent-color); }
-        .btn-out { background: var(--success); color: white; }
 
         .backup-section { display: flex; gap: 8px; margin-bottom: 20px; }
-        .btn-util { flex: 1; background: #1c1c1e; border: 1px solid #333; color: #8e8e93; padding: 10px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; cursor: pointer; }
+        .btn-util { flex: 1; background: #1c1c1e; border: 1px solid #333; color: #8e8e93; padding: 10px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; cursor: pointer; border:none; }
         
         .week-box { background: var(--card-bg); border-radius: var(--border-radius); margin-bottom: 12px; border: 1px solid var(--border-color); overflow: hidden; }
         .week-header { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
         
         table { width: 100%; border-collapse: collapse; }
         td { padding: 14px 15px; border-top: 1px solid #2c2c2e; font-size: 0.85rem; }
+        
         .pos { color: var(--success); }
         .neg { color: var(--danger); }
-        .btn-del { color: #444; background: none; border: none; font-size: 1.2rem; padding: 5px; cursor: pointer; }
+        .btn-del { color: #444; background: none; border: none; font-size: 1.2rem; cursor: pointer; }
         .hidden { display: none; }
     </style>
 </head>
@@ -109,22 +107,18 @@
     </header>
 
     <div class="input-card">
-        <div id="statusBanner" class="status-banner">🟢 Sessione attiva (Entrata: <span id="startTimeDisplay">--:--</span>)</div>
-        
         <div class="grid-inputs">
             <div class="field"><label>Data</label><input type="date" id="d_date"></div>
             <div class="field"><label>Pausa (min)</label><input type="number" id="d_break" value="30"></div>
             <div class="field"><label>Ingresso</label><input type="time" id="d_in" value="08:00"></div>
             <div class="field"><label>Uscita</label><input type="time" id="d_out" value="16:00"></div>
         </div>
-        
-        <button id="actionBtn" class="btn-main btn-in" onclick="handleAction()">Registra Entrata</button>
-        <button id="resetBtn" class="btn-util" style="margin-top:10px; width:100%; display:none; border:none;" onclick="resetLive()">Annulla Sessione</button>
+        <button class="btn-main" onclick="addEntry()">Salva Giornata</button>
     </div>
 
     <div class="backup-section">
-        <button class="btn-util" onclick="exportData()" style="border:none">📦 BACKUP</button>
-        <button class="btn-util" onclick="importData()" style="border:none">📥 CARICA</button>
+        <button class="btn-util" onclick="exportData()">📦 BACKUP</button>
+        <button class="btn-util" onclick="importData()">📥 CARICA</button>
     </div>
 
     <div id="history"></div>
@@ -135,84 +129,41 @@
     const FRIDAY_TARGET = 6 * 60;
     const MAX_FREE_BREAK = 30;
 
+    // Inizializzazione: Data odierna e caricamento dati
+    document.getElementById('d_date').valueAsDate = new Date();
     let logs = JSON.parse(localStorage.getItem('timeLogs_v6')) || [];
-    let activeSession = JSON.parse(localStorage.getItem('activeSession')) || null;
 
-    function init() {
-        document.getElementById('d_date').valueAsDate = new Date();
-        updateUI();
-        render();
-    }
-
-    function updateUI() {
-        const btn = document.getElementById('actionBtn');
-        const banner = document.getElementById('statusBanner');
-        const resetBtn = document.getElementById('resetBtn');
-        const inputIn = document.getElementById('d_in');
-        const inputOut = document.getElementById('d_out');
-
-        if (activeSession) {
-            btn.innerText = "Registra Uscita";
-            btn.className = "btn-main btn-out";
-            banner.style.display = "block";
-            resetBtn.style.display = "block";
-            document.getElementById('startTimeDisplay').innerText = activeSession.in;
-            inputIn.value = activeSession.in;
-            // Lasciamo l'input abilitato così se hai sbagliato l'ora di ingresso puoi correggerla prima di chiudere
-        } else {
-            btn.innerText = "Registra Entrata";
-            btn.className = "btn-main btn-in";
-            banner.style.display = "none";
-            resetBtn.style.display = "none";
-        }
-    }
-
-    function handleAction() {
-        const timeIn = document.getElementById('d_in').value;
-        const timeOut = document.getElementById('d_out').value;
-        const date = document.getElementById('d_date').value;
-
-        if (!activeSession) {
-            // Registra solo l'entrata
-            activeSession = { in: timeIn, date: date };
-            localStorage.setItem('activeSession', JSON.stringify(activeSession));
-        } else {
-            // Registra l'uscita e calcola
-            completeEntry(date, timeIn, timeOut);
-        }
-        updateUI();
-    }
-
-    function completeEntry(d_date, d_in, d_out) {
+    function addEntry() {
+        const d_date = document.getElementById('d_date').value;
+        const d_in = document.getElementById('d_in').value;
+        const d_out = document.getElementById('d_out').value;
         const realBreak = parseInt(document.getElementById('d_break').value) || 0;
+
+        if(!d_date || !d_in || !d_out) {
+            alert("Compila tutti i campi!");
+            return;
+        }
+
         const [h1, m1] = d_in.split(':').map(Number);
         const [h2, m2] = d_out.split(':').map(Number);
         
         const presence = (h2 * 60 + m2) - (h1 * 60 + m1);
-        if (presence <= 0) {
-            alert("L'ora di uscita deve essere successiva all'entrata!");
+        if(presence <= 0) {
+            alert("L'uscita deve essere dopo l'entrata!");
             return;
         }
 
         const isFri = new Date(d_date).getDay() === 5;
         const target = isFri ? FRIDAY_TARGET : TARGET_MINUTES;
+
+        // Se è venerdì, la pausa non viene sottratta dal target (secondo logica precedente)
+        // Altrimenti sottraiamo solo l'eccedenza oltre i 30min
         const extraBreak = (!isFri && realBreak > MAX_FREE_BREAK) ? (realBreak - MAX_FREE_BREAK) : 0;
         const delta = presence - target - extraBreak;
 
         logs.push({ id: Date.now(), date: d_date, weekID: getISOWeek(d_date), in: d_in, out: d_out, pause: realBreak, delta: delta });
         logs.sort((a,b) => new Date(b.date) - new Date(a.date));
-        
-        activeSession = null;
-        localStorage.removeItem('activeSession');
         save();
-    }
-
-    function resetLive() {
-        if(confirm("Annullare la sessione attuale?")) {
-            activeSession = null;
-            localStorage.removeItem('activeSession');
-            updateUI();
-        }
     }
 
     function getISOWeek(date) {
@@ -263,7 +214,7 @@
                         ${data.items.map(i => `
                             <tr>
                                 <td><strong>${new Date(i.date).toLocaleDateString('it-IT',{day:'2-digit', month:'short'})}</strong></td>
-                                <td>${i.in}–${i.out} <div style="font-size:0.65rem; opacity:0.6">Pausa: ${i.pause}m</div></td>
+                                <td>${i.in}–${i.out} <div style="font-size:0.65rem; color:#8e8e93">Pausa: ${i.pause}m</div></td>
                                 <td class="${i.delta >= 0 ? 'pos' : 'neg'}" style="text-align:right"><strong>${fmt(i.delta)}</strong></td>
                                 <td style="text-align:right"><button class="btn-del" onclick="event.stopPropagation(); del(${i.id})">×</button></td>
                             </tr>
@@ -282,7 +233,7 @@
         const blob = new Blob([JSON.stringify(logs)], {type: "application/json"});
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = "backup_tempi.json";
+        a.download = "backup_orari.json";
         a.click();
     }
 
@@ -292,19 +243,13 @@
         input.onchange = e => {
             const reader = new FileReader();
             reader.readAsText(e.target.files[0]);
-            reader.onload = e => { 
-                try {
-                    logs = JSON.parse(e.target.result); 
-                    save(); 
-                } catch(err) { alert("File non valido"); }
-            };
+            reader.onload = e => { logs = JSON.parse(e.target.result); save(); };
         };
         input.click();
     }
 
-    window.del = (id) => { if(confirm('Eliminare?')) { logs = logs.filter(l => l.id !== id); save(); } };
-    
-    init();
+    window.del = (id) => { if(confirm('Eliminare questa voce?')) { logs = logs.filter(l => l.id !== id); save(); } };
+    render();
 </script>
 </body>
 </html>
