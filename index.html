@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TimeTracker - Weekly Reset</title>
+    <title>TimeTracker Pro</title>
     <style>
         :root {
             --bg-color: #000000;
@@ -14,75 +14,90 @@
             --success: #30d158;
             --danger: #ff453a;
             --border-color: #38383a;
-            --border-radius: 14px;
+            --border-radius: 16px;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background-color: var(--bg-color); color: var(--text-primary); padding: 20px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 600px; }
+        .container { width: 100%; max-width: 500px; animation: fadeIn 0.5s ease; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10s); } to { opacity: 1; transform: translateY(0); } }
 
         .kpi-container {
-            background: linear-gradient(180deg, #1c1c1e 0%, #000000 100%);
-            padding: 30px;
-            border-radius: var(--border-radius);
+            background: linear-gradient(145deg, #2c2c2e 0%, #1c1c1e 100%);
+            padding: 35px 20px;
+            border-radius: 24px;
             text-align: center;
             margin-bottom: 25px;
             border: 1px solid var(--border-color);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
         }
-        .kpi-label { color: var(--accent-color); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; }
-        .kpi-value { font-size: 3.5rem; font-weight: 800; margin: 5px 0; letter-spacing: -1px; }
+
+        .clock-icon {
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 10px;
+            color: var(--accent-color);
+            width: 32px;
+            height: 32px;
+            margin-bottom: 8px;
+        }
+
+        .kpi-label { color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .kpi-value { font-size: 3.8rem; font-weight: 800; margin: 5px 0; letter-spacing: -2px; display: flex; align-items: center; justify-content: center; }
 
         .input-card {
             background: var(--card-bg);
-            padding: 20px;
+            padding: 24px;
             border-radius: var(--border-radius);
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             border: 1px solid var(--border-color);
         }
-        .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
-        .field { display: flex; flex-direction: column; gap: 5px; }
-        label { color: var(--text-secondary); font-size: 0.75rem; font-weight: 600; margin-left: 5px; }
+        .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+        .field { display: flex; flex-direction: column; gap: 8px; }
+        label { color: var(--text-secondary); font-size: 0.75rem; font-weight: 600; margin-left: 4px; }
+        
         input {
             background: #2c2c2e;
-            border: 1px solid var(--border-color);
+            border: 1px solid transparent;
             color: white;
-            padding: 12px;
-            border-radius: 10px;
+            padding: 14px;
+            border-radius: 12px;
             font-size: 1rem;
-            outline: none;
+            transition: all 0.2s;
         }
+        input:focus { border-color: var(--accent-color); background: #3a3a3c; outline: none; }
         
         .btn-submit {
             width: 100%;
             background: var(--accent-color);
             color: white;
             border: none;
-            padding: 15px;
-            border-radius: 12px;
+            padding: 16px;
+            border-radius: 14px;
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 1.05rem;
             cursor: pointer;
+            transition: transform 0.1s;
         }
+        .btn-submit:active { transform: scale(0.98); }
 
-        .backup-controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        
+        .backup-controls { display: flex; gap: 10px; margin-bottom: 20px; }
         .btn-backup {
             flex: 1;
-            background: #2c2c2e;
+            background: transparent;
             color: var(--text-secondary);
             border: 1px solid var(--border-color);
-            padding: 8px;
-            border-radius: 8px;
+            padding: 10px;
+            border-radius: 10px;
             font-size: 0.7rem;
             font-weight: 600;
             cursor: pointer;
-            text-transform: uppercase;
+            transition: background 0.2s;
         }
+        .btn-backup:hover { background: #1c1c1e; color: white; }
 
         .week-box {
             background: var(--card-bg);
@@ -92,25 +107,24 @@
             overflow: hidden;
         }
         .week-header {
-            background: #2c2c2e;
-            padding: 15px 20px;
+            padding: 18px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             cursor: pointer;
+            background: rgba(255,255,255,0.02);
         }
-        .week-title { font-weight: 700; font-size: 0.9rem; }
-        .week-delta { font-weight: 700; font-size: 0.9rem; padding: 4px 10px; border-radius: 8px; background: rgba(0,0,0,0.3); }
+        .week-title { font-weight: 700; font-size: 0.95rem; }
+        .week-delta { font-weight: 700; font-size: 0.9rem; padding: 6px 12px; border-radius: 10px; background: rgba(0,0,0,0.3); }
 
-        .table-wrapper { overflow-x: auto; padding: 5px; }
-        table { width: 100%; border-collapse: collapse; min-width: 400px; }
-        th { text-align: left; padding: 12px; color: var(--text-secondary); font-size: 0.65rem; text-transform: uppercase; }
-        td { padding: 12px; border-bottom: 1px solid #2c2c2e; font-size: 0.85rem; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 12px 20px; color: var(--text-secondary); font-size: 0.65rem; text-transform: uppercase; background: rgba(0,0,0,0.1); }
+        td { padding: 14px 20px; border-bottom: 1px solid #2c2c2e; font-size: 0.9rem; }
         
         .pos { color: var(--success); }
         .neg { color: var(--danger); }
-        .btn-del { color: var(--danger); background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0 10px; opacity: 0.5; }
-        .btn-del:hover { opacity: 1; }
+        .btn-del { color: #555; background: none; border: none; font-size: 1.2rem; cursor: pointer; transition: color 0.2s; }
+        .btn-del:hover { color: var(--danger); }
 
         .hidden { display: none; }
     </style>
@@ -119,9 +133,14 @@
 
 <div class="container">
     <header class="kpi-container">
-        <div class="kpi-label">Saldo Settimana Corrente</div>
+        <!-- Icona Orologio SVG -->
+        <svg class="clock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <div class="kpi-label">Saldo Settimanale</div>
         <div id="mainBalance" class="kpi-value">0h 0m</div>
-        <div id="weekRange" style="font-size: 0.75rem; color: var(--text-secondary);">Recupero basato sui 3 giorni di presenza</div>
+        <div style="font-size: 0.75rem; color: var(--text-secondary); opacity: 0.7;">Target 3gg/settimana</div>
     </header>
 
     <div class="input-card">
@@ -131,13 +150,12 @@
             <div class="field"><label>Ingresso</label><input type="time" id="d_in" value="09:00"></div>
             <div class="field"><label>Uscita</label><input type="time" id="d_out" value="18:00"></div>
         </div>
-        <button class="btn-submit" onclick="addEntry()">Registra Presenza</button>
+        <button class="btn-submit" onclick="addEntry()">Registra Sessione</button>
     </div>
 
-    <!-- Backup Controls -->
     <div class="backup-controls">
-        <button class="btn-backup" onclick="exportData()">💾 Esporta Backup</button>
-        <button class="btn-backup" onclick="importData()">📂 Importa Backup</button>
+        <button class="btn-backup" onclick="exportData()">📤 Esporta Dati</button>
+        <button class="btn-backup" onclick="importData()">📥 Importa Dati</button>
     </div>
 
     <div id="history"></div>
@@ -215,10 +233,7 @@
             if(!groups[l.weekID]) groups[l.weekID] = { items: [], sum: 0 };
             groups[l.weekID].items.push(l);
             groups[l.weekID].sum += l.delta;
-            
-            if(l.weekID === currentWeekID) {
-                currentWeekTotal += l.delta;
-            }
+            if(l.weekID === currentWeekID) currentWeekTotal += l.delta;
         });
 
         const sortedWeekIDs = Object.keys(groups).sort().reverse();
@@ -231,20 +246,19 @@
             div.className = 'week-box';
             div.innerHTML = `
                 <div class="week-header" onclick="this.nextElementSibling.classList.toggle('hidden')">
-                    <span class="week-title">${wId.replace('-W', ' · Settimana ')} ${isCurrent ? '(Corrente)' : ''}</span>
+                    <span class="week-title">${wId.replace('-W', ' · Settimana ')} ${isCurrent ? '<span style="color:var(--accent-color); font-size:0.7rem; margin-left:5px;">● CORRENTE</span>' : ''}</span>
                     <span class="week-delta ${data.sum >= 0 ? 'pos' : 'neg'}">${fmt(data.sum)}</span>
                 </div>
                 <div class="table-wrapper ${!isCurrent ? 'hidden' : ''}">
                     <table>
-                        <thead><tr><th>Data</th><th>Orario</th><th>Pausa</th><th>Saldo</th><th></th></tr></thead>
+                        <thead><tr><th>Giorno</th><th>Ore</th><th>Δ</th><th></th></tr></thead>
                         <tbody>
                             ${data.items.map(i => `
                                 <tr>
                                     <td><strong>${new Date(i.date).toLocaleDateString('it-IT',{weekday:'short', day:'2-digit'})}</strong></td>
-                                    <td>${i.in}-${i.out}</td>
-                                    <td>${i.pause}m</td>
+                                    <td>${i.in}–${i.out}</td>
                                     <td class="${i.delta >= 0 ? 'pos' : 'neg'}"><strong>${fmt(i.delta)}</strong></td>
-                                    <td><button class="btn-del" onclick="event.stopPropagation(); del(${i.id})">×</button></td>
+                                    <td style="text-align:right"><button class="btn-del" onclick="event.stopPropagation(); del(${i.id})">×</button></td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -258,13 +272,12 @@
         mainBal.className = `kpi-value ${currentWeekTotal >= 0 ? 'pos' : 'neg'}`;
     }
 
-    // Funzioni di Backup
     function exportData() {
-        if (logs.length === 0) return alert("Nessun dato da esportare.");
+        if (logs.length === 0) return alert("Nessun dato presente.");
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(logs));
         const downloadAnchorNode = document.createElement('a');
         downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", "timetracker_backup_" + new Date().toISOString().split('T')[0] + ".json");
+        downloadAnchorNode.setAttribute("download", "tracker_backup_" + new Date().toISOString().split('T')[0] + ".json");
         document.body.appendChild(downloadAnchorNode);
         downloadAnchorNode.click();
         downloadAnchorNode.remove();
@@ -278,24 +291,17 @@
             const file = e.target.files[0];
             const reader = new FileReader();
             reader.readAsText(file, 'UTF-8');
-            reader.onload = readerEvent => {
+            reader.onload = e => {
                 try {
-                    const content = JSON.parse(readerEvent.target.result);
-                    if (Array.isArray(content) && confirm("Questo sovrascriverà i dati attuali con quelli del file. Procedere?")) {
-                        logs = content;
-                        save();
-                    } else if (!Array.isArray(content)) {
-                        alert("Formato file non valido.");
-                    }
-                } catch (e) {
-                    alert("Errore durante la lettura del file.");
-                }
+                    logs = JSON.parse(e.target.result);
+                    save();
+                } catch(err) { alert("File non valido."); }
             }
         }
         input.click();
     }
 
-    window.del = (id) => { if(confirm('Eliminare questa voce?')) { logs = logs.filter(l => l.id !== id); save(); } };
+    window.del = (id) => { if(confirm('Eliminare?')) { logs = logs.filter(l => l.id !== id); save(); } };
     render();
 </script>
 </body>
