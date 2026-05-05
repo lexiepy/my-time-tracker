@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TimeTracker - Manuale Rapido</title>
+    <title>TimeTracker - Step by Step</title>
     <style>
         :root {
             --bg-color: #000000;
@@ -41,21 +41,8 @@
             border: 1px solid var(--border-color);
         }
 
-        /* Layout Grid per evitare overflow come in image_2.png */
-        .grid-inputs { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 12px; 
-            margin-bottom: 20px; 
-        }
-        
-        .field { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 6px; 
-            min-width: 0; 
-        }
-        
+        .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
         label { color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; }
         
         input {
@@ -71,27 +58,28 @@
             outline: none;
         }
 
+        /* Pulsanti differenziati per step */
         .btn-main {
             width: 100%;
-            background: var(--accent-color);
-            color: white;
             border: none;
             padding: 18px;
             border-radius: 15px;
             font-weight: 700;
             font-size: 1.1rem;
             cursor: pointer;
+            transition: 0.2s;
         }
+        .btn-step1 { background: var(--accent-color); color: white; }
+        .btn-step2 { background: var(--success); color: white; }
 
         .backup-section { display: flex; gap: 8px; margin-bottom: 20px; }
-        .btn-util { flex: 1; background: #1c1c1e; border: 1px solid #333; color: #8e8e93; padding: 10px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; cursor: pointer; border:none; }
+        .btn-util { flex: 1; background: #1c1c1e; border: 1px solid #333; color: #8e8e93; padding: 10px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; cursor: pointer; }
         
         .week-box { background: var(--card-bg); border-radius: var(--border-radius); margin-bottom: 12px; border: 1px solid var(--border-color); overflow: hidden; }
         .week-header { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
         
         table { width: 100%; border-collapse: collapse; }
         td { padding: 14px 15px; border-top: 1px solid #2c2c2e; font-size: 0.85rem; }
-        
         .pos { color: var(--success); }
         .neg { color: var(--danger); }
         .btn-del { color: #444; background: none; border: none; font-size: 1.2rem; cursor: pointer; }
@@ -111,14 +99,17 @@
             <div class="field"><label>Data</label><input type="date" id="d_date"></div>
             <div class="field"><label>Pausa (min)</label><input type="number" id="d_break" value="30"></div>
             <div class="field"><label>Ingresso</label><input type="time" id="d_in" value="08:00"></div>
-            <div class="field"><label>Uscita</label><input type="time" id="d_out" value="16:00"></div>
+            <div class="field" id="field_out" style="display:none"><label>Uscita</label><input type="time" id="d_out" value="16:00"></div>
         </div>
-        <button class="btn-main" onclick="addEntry()">Salva Giornata</button>
+        
+        <button id="btn_step1" class="btn-main btn-step1" onclick="saveEntry()">Registra Entrata</button>
+        <button id="btn_step2" class="btn-main btn-step2" style="display:none" onclick="saveExit()">Registra Uscita e Chiudi</button>
+        <button id="btn_cancel" class="btn-util" style="width:100%; margin-top:10px; display:none; border:none" onclick="cancelPending()">Annulla Entrata</button>
     </div>
 
     <div class="backup-section">
-        <button class="btn-util" onclick="exportData()">📦 BACKUP</button>
-        <button class="btn-util" onclick="importData()">📥 CARICA</button>
+        <button class="btn-util" onclick="exportData()" style="border:none">📦 BACKUP</button>
+        <button class="btn-util" onclick="importData()" style="border:none">📥 CARICA</button>
     </div>
 
     <div id="history"></div>
@@ -129,41 +120,77 @@
     const FRIDAY_TARGET = 6 * 60;
     const MAX_FREE_BREAK = 30;
 
-    // Inizializzazione: Data odierna e caricamento dati
-    document.getElementById('d_date').valueAsDate = new Date();
     let logs = JSON.parse(localStorage.getItem('timeLogs_v6')) || [];
+    let pending = JSON.parse(localStorage.getItem('pendingEntry')) || null;
 
-    function addEntry() {
-        const d_date = document.getElementById('d_date').value;
-        const d_in = document.getElementById('d_in').value;
-        const d_out = document.getElementById('d_out').value;
+    function init() {
+        document.getElementById('d_date').valueAsDate = new Date();
+        refreshUI();
+        render();
+    }
+
+    function refreshUI() {
+        const fOut = document.getElementById('field_out');
+        const b1 = document.getElementById('btn_step1');
+        const b2 = document.getElementById('btn_step2');
+        const bc = document.getElementById('btn_cancel');
+        const iIn = document.getElementById('d_in');
+
+        if (pending) {
+            fOut.style.display = 'flex';
+            b1.style.display = 'none';
+            b2.style.display = 'block';
+            bc.style.display = 'block';
+            iIn.value = pending.in;
+            iIn.disabled = true;
+            document.getElementById('d_date').value = pending.date;
+        } else {
+            fOut.style.display = 'none';
+            b1.style.display = 'block';
+            b2.style.display = 'none';
+            bc.style.display = 'none';
+            iIn.disabled = false;
+        }
+    }
+
+    function saveEntry() {
+        const valIn = document.getElementById('d_in').value;
+        const valDate = document.getElementById('d_date').value;
+        pending = { in: valIn, date: valDate };
+        localStorage.setItem('pendingEntry', JSON.stringify(pending));
+        refreshUI();
+    }
+
+    function saveExit() {
+        const valOut = document.getElementById('d_out').value;
         const realBreak = parseInt(document.getElementById('d_break').value) || 0;
-
-        if(!d_date || !d_in || !d_out) {
-            alert("Compila tutti i campi!");
-            return;
-        }
-
-        const [h1, m1] = d_in.split(':').map(Number);
-        const [h2, m2] = d_out.split(':').map(Number);
         
+        const [h1, m1] = pending.in.split(':').map(Number);
+        const [h2, m2] = valOut.split(':').map(Number);
         const presence = (h2 * 60 + m2) - (h1 * 60 + m1);
-        if(presence <= 0) {
-            alert("L'uscita deve essere dopo l'entrata!");
-            return;
-        }
 
-        const isFri = new Date(d_date).getDay() === 5;
+        if (presence <= 0) { alert("L'uscita deve essere dopo l'entrata!"); return; }
+
+        const isFri = new Date(pending.date).getDay() === 5;
         const target = isFri ? FRIDAY_TARGET : TARGET_MINUTES;
-
-        // Se è venerdì, la pausa non viene sottratta dal target (secondo logica precedente)
-        // Altrimenti sottraiamo solo l'eccedenza oltre i 30min
         const extraBreak = (!isFri && realBreak > MAX_FREE_BREAK) ? (realBreak - MAX_FREE_BREAK) : 0;
         const delta = presence - target - extraBreak;
 
-        logs.push({ id: Date.now(), date: d_date, weekID: getISOWeek(d_date), in: d_in, out: d_out, pause: realBreak, delta: delta });
+        logs.push({ id: Date.now(), date: pending.date, weekID: getISOWeek(pending.date), in: pending.in, out: valOut, pause: realBreak, delta: delta });
         logs.sort((a,b) => new Date(b.date) - new Date(a.date));
+        
+        pending = null;
+        localStorage.removeItem('pendingEntry');
         save();
+        refreshUI();
+    }
+
+    function cancelPending() {
+        if(confirm("Vuoi annullare l'entrata registrata?")) {
+            pending = null;
+            localStorage.removeItem('pendingEntry');
+            refreshUI();
+        }
     }
 
     function getISOWeek(date) {
@@ -201,7 +228,6 @@
 
         Object.keys(groups).sort().reverse().forEach(wId => {
             const data = groups[wId];
-            const isCurrent = wId === currentWeekID;
             const div = document.createElement('div');
             div.className = 'week-box';
             div.innerHTML = `
@@ -209,7 +235,7 @@
                     <span style="font-weight:700">Settimana ${wId.split('W')[1]}</span>
                     <span class="${data.sum >= 0 ? 'pos' : 'neg'}" style="font-weight:700">${fmt(data.sum)}</span>
                 </div>
-                <div class="${isCurrent ? '' : 'hidden'}">
+                <div class="${wId === currentWeekID ? '' : 'hidden'}">
                     <table>
                         ${data.items.map(i => `
                             <tr>
@@ -233,7 +259,7 @@
         const blob = new Blob([JSON.stringify(logs)], {type: "application/json"});
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = "backup_orari.json";
+        a.download = "backup.json";
         a.click();
     }
 
@@ -248,8 +274,9 @@
         input.click();
     }
 
-    window.del = (id) => { if(confirm('Eliminare questa voce?')) { logs = logs.filter(l => l.id !== id); save(); } };
-    render();
+    window.del = (id) => { if(confirm('Eliminare?')) { logs = logs.filter(l => l.id !== id); save(); } };
+    
+    init();
 </script>
 </body>
 </html>
